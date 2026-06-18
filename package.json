@@ -1,0 +1,48 @@
+{
+  "name": "family-tree",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:server": "tsx server/index.ts",
+    "dev:all": "concurrently -n web,api -c blue,green \"npm run dev\" \"npm run dev:server\"",
+    "build": "tsc -b && vite build",
+    "start": "SERVE_STATIC=1 tsx server/index.ts",
+    "dev:netlify": "netlify dev",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "import-csv": "node scripts/import-csv.mjs"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^10.3.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tailwindcss/vite": "^4.3.1",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/node": "^24.12.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.1.2",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "netlify-cli": "^23.11.0",
+    "tailwindcss": "^4.3.1",
+    "tsx": "^4.19.3",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.59.2",
+    "vite": "^8.0.12"
+  }
+}

@@ -1,0 +1,144 @@
+id,name,birth_date,anniversary,birthplace,parent1_id,parent2_id,spouse_id,generation
+kr,R.Krishnamachari,,,"Vedanthangal, India",,,ka,1
+ka,Kannakavalli,,,"Vedanthangal, India",,,kr,1
+ve,K.Vedam,23 Oct,,"Madras, India",kr,ka,su,2
+su,V.Sundararajan,11 Jan,,,,,ve,2
+ko,Komala Chari,23 Sep,,"Madras, India",kr,ka,ch,2
+ch,R.S.Chari,,,,,,ko,2
+sh,Shantha Rangaswamy,12 Mar,,"Madras, India",kr,ka,rw,2
+rw,R.S.Rangaswamy,,,,,,sh,2
+ja,Jaya Ramanujam,3 Aug,19 Aug,"Madras, India",kr,ka,pr,2
+pr,P.T.Ramanujam,13 Jan,19 Aug,,,,ja,2
+pa,K.Parthasarathi,12 May,13 Nov,"Madras, India",kr,ka,vp,2
+vp,Vasantha Parthasarathi,28 Oct,13 Nov,,,,pa,2
+jn,Janaki Raghavan,13 Apr,,"Madras, India",kr,ka,nr,2
+nr,N.S.Raghavan,30 Sep,,,,,jn,2
+in,Indira Parthasarathy,12 Jul,,"Madras, India",kr,ka,np,2
+np,N.Parthasarathy,,,,,,in,2
+na,K.Narayanan,25 Aug,,"Madras, India",kr,ka,vj,2
+vj,Vaijayanthi Narayanan,28 Aug,,,,,na,2
+my,Mythily Sarathy,23 Jan,,"Madras, India",kr,ka,sy,2
+sy,S.Sarathy,29 Aug,,,,,my,2
+vs,Vasanta Rajagopalan,9 Oct,13 Jul,,ve,su,rg,3
+rg,S.Rajagopalan,3 Apr,13 Jul,,,,vs,3
+lk,Lakshmi Gopal,27 Sep,17 Jan,,ve,su,go,3
+go,R.Gopal,13 Mar,17 Jan,,,,lk,3
+sd,Sadagopan Srinivasan,26 Oct,7 Dec,,ko,ch,rv2,3
+rv2,Revathi Srinivasan,10 Jul,7 Dec,,,,sd,3
+us,Usha Ramanujam,24 Sep,,,ko,ch,rm,3
+rm,R.Ramanujam,22 Jul,,,,,us,3
+he,Hema Santhanam,30 Jul,,,ko,ch,sn,3
+sn,S.Santhanam,26 May,,,,,he,3
+se,R.Seshadri,27 Aug,,,sh,rw,sw,3
+sw,Sherry Sesh,,,,,,se,3
+rv,R.Vasudevan,9 Dec,,,sh,rw,jv,3
+jv,Jayasri Vasudevan,,,,,,rv,3
+rj,R.Jagannathan,3 Aug,,,sh,rw,rdj,3
+rdj,Radha Jagannathan,,,,,,rj,3
+pv,P.T.Vasu,9 Dec,26 Mar,,ja,pr,km,3
+km,Kamala Vasu,3 Oct,26 Mar,,,,pv,3
+sa,Santha Srinivasan,16 Apr,27 Oct,,ja,pr,ms,3
+ms,M.S.Srinivasan,18 Oct,27 Oct,,,,sa,3
+rn,P.T.Rangarajan,6 Sep,31 Oct,,ja,pr,al,3
+al,Alamelu Rangarajan,25 Mar,31 Oct,,,,rn,3
+ns,Dr.P.T.Narasimhan,22 Jun,25 Jan,,ja,pr,jn3,3
+jn3,Jayasri Narasimhan,8 Feb,25 Jan,,,,ns,3
+pj,P.T.Jagannathan,18 May,3 Jun,,ja,pr,pd,3
+pd,Padmaja Jagannathan,13 Nov,3 Jun,,,,pj,3
+um,Uma Rajagopalan,6 Jul,5 Nov,,ja,pr,tr,3
+tr,T.Rajagopalan,10 Sep,5 Nov,,,,um,3
+rd,Radhika Ramesh,7 May,8 Feb,,pa,vp,rp,3
+rp,Ramesh Padmanabhan,19 May,8 Feb,,,,rd,3
+vi,Vidya Balaji,1 Feb,25 Apr,,pa,vp,bi,3
+bi,Balaji Iyengar,1 Apr,25 Apr,,,,vi,3
+nj,N.Janardhanan,8 Nov,,,jn,nr,sj,3
+sj,Sweta Janardhanan,23 Nov,,,,,nj,3
+nn,N.Narasimhan,3 Jun,,,jn,nr,jn4,3
+jn4,Jayasri Narasimhan,7 Dec,,,,,nn,3
+ls,Lakshmi Srinivasan,17 Jan,,,jn,nr,sl,3
+sl,Srinivasan,22 Sep,,,,,ls,3
+vk,P.Venkatesh,4 Oct,,,in,np,rj2,3
+rj2,Rajani Venkatesh,,,,,,vk,3
+vij,Vijay,,,,in,np,,3
+re,Rema Sriram,13 Sep,,,in,np,ss2,3
+ss2,S.Sriram,,,,,,re,3
+kn,Krishnan Narayanan,11 Apr,,,na,vj,ry,3
+ry,Ramya Krishnan,,,,,,kn,3
+vy,Vijaya Srinath,,,,my,sy,ts,3
+ts,T.A.P.Srinath,,,,,,vy,3
+jg,Jagan Athreya,10 Jan,23 May,,vs,rg,so,4
+so,Sowmya Jagan,25 Sep,23 May,,,,jg,4
+jt,Jyoti Ramesh,12 Jan,15 Jul,,vs,rg,rv3,4
+rv3,Ramesh Vijayaraghavan,4 Feb,15 Jul,,,,jt,4
+jy,Jayanti Sundar,6 Jul,17 May,,lk,go,snd,4
+snd,Sundar,13 May,17 May,,,,jy,4
+sr,Sriram Srinivasan,26 Feb,,,sd,rv2,at,4
+at,Aarti Sriram,25 Nov,,,,,sr,4
+sg,Sangeeta Ramprasad,20 Oct,,,sd,rv2,rpr,4
+rpr,Ramprasad,,,,,,sg,4
+py,Priya Sarathi,5 Apr,,,us,rm,spt,4
+spt,Sarathi,,,,,,py,4
+mr,Mythili Ramprakash,16 Jun,,,us,rm,rk,4
+rk,Ramprakash,,,,,,mr,4
+hk,Harini Kapoor,12 Mar,,,he,sn,mk,4
+mk,Mandeep Kapoor,6 Nov,,,,,hk,4
+dm,S.Janardhanan(Damu),11 Jul,,,he,sn,rdm,4
+rdm,Radha Janardhanan,12 May,,,,,dm,4
+js,Jagan Seshadri,,,,se,sw,ca,4
+ca,Carin Seshadri,,,,,,js,4
+jn2,Jana Sesh,,,,se,sw,,4
+gt,Gautam Vasudevan,,,,rv,jv,ri,4
+ri,Rinara Vasudevan,,,,,,gt,4
+vv,Vijay Vasudevan,,,,rv,jv,bw,4
+bw,Beverly Wang,,,,,,vv,4
+ak,Aakash Jagannathan,,,,rj,rdj,,4
+an,Anisha Jagannathan,,,,rj,rdj,,4
+aw,Aishwarya Balaji,28 Oct,1 Sep,,pv,km,bl,4
+bl,Balaji,8 Nov,1 Sep,,,,aw,4
+ar,Archana Vasu,16 Oct,,,pv,km,,4
+hs,Harini Shankar,11 Oct,11 Feb,,sa,ms,as,4
+as,Asish Srivastava,2 Jul,11 Feb,,,,hs,4
+ss,Sudarshan Srinivasan,25 Apr,7 Mar,,sa,ms,rs2,4
+rs2,Rajeswari Sudarshan,24 Oct,7 Mar,,,,ss,4
+sv,Srividya,17 Jun,,,rn,al,,4
+aw2,Ashwin (Rangarajan),,,,rn,al,,4
+aw3,Ashwin (Narasimhan),15 Oct,,,ns,jn3,,4
+hn,Harini,6 Jul,,,ns,jn3,,4
+vt,Vishnu Teja,15 Jun,,,pj,pd,,4
+si,Srinivas,27 Dec,,,pj,pd,,4
+nk,Neharika Rajagopalan,24 Aug,,,um,tr,,4
+sr2,Sahana Rajagopalan,15 Jun,,,um,tr,,4
+md,Madhumitha Ramesh,1 May,,,rd,rp,,4
+ps,Prashanth Ramesh,6 Oct,,,rd,rp,,4
+up,Upasana Iyengar,12 Mar,,,vi,bi,,4
+ai,Anish Iyengar,29 Jan,,,vi,bi,,4
+sb,Shubha Janardhan,27 Aug,,,nj,sj,,4
+bh,Bharath Janardhanan,27 Sep,,,nj,sj,,4
+kr2,Krupa Narasimhan,11 Jun,,,nn,jn4,,4
+ar2,Arjun Narasimhan,27 Sep,,,nn,jn4,,4
+sd2,Siddharth Srinivasan,27 Nov,,,ls,sl,,4
+sn2,Sindhu Srinivasan,28 Nov,,,ls,sl,,4
+lv,Lakshmi Venkatesh,,,,vk,rj2,,4
+nv,Niranjana Venkatesh,,,,vk,rj2,,4
+rs,Radha Sriram,,,,re,ss2,,4
+sh2,Shyam Sriram,,,,re,ss2,,4
+ro,Rohan Krishnan,1 Jan,,,kn,ry,,4
+sh3,Shruti Srinath,4 Oct,,,vy,ts,,4
+vx,Vikshar Athreya,2 Dec,,,jg,so,,5
+vb,Vibhav Athreya,7 Mar,,,jg,so,,5
+dv,Divya Ramesh,15 Jul,,,jt,rv3,,5
+vd,Ved Krishna,30 Sep,,,jt,rv3,,5
+ml,Mallika Sundar,26 Nov,,,jy,snd,,5
+ad,Aditya Sundar,10 Jun,,,jy,snd,,5
+sh4,Sahana Ramprasad,5 Sep,,,sg,rpr,,5
+rj3,Ranjani Ramprasad,18 Apr,,,sg,rpr,,5
+su2,Sudarsan Sarathi,,,,py,spt,,5
+me,Medha Kapoor,29 May,,,hk,mk,,5
+an2,Anjali Kapoor,15 Mar,,,hk,mk,,5
+hr,Hrishi Balaji,20 Jun,,,aw,bl,,5
+ads,Aditya Shankar,5 Jul,,,hs,as,,5
+sh5,Shreya Shankar,11 Nov,,,hs,as,,5
+jr,Jaron Seshadri,,,,js,ca,,5
+ka2,Kai Seshadri,,,,js,ca,,5
+le,Leor Vasudevan,,,,gt,ri,,5
+ha,Hana Vasudevan,,,,vv,bw,,5

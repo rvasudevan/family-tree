@@ -1,0 +1,843 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", "Iowan Old Style", Palatino, Georgia, serif;
+  --font-sans: "Outfit", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-cream: #faf6f0;
+  --color-parchment: #f3ebe0;
+  --color-bark: #3d2c1e;
+  --color-bark-light: #5c4a3a;
+  --color-sage: #6b7f6a;
+  --color-sage-light: #8fa38e;
+  --color-gold: #c4a35a;
+  --color-rose: #c17f7a;
+  --ease-liquid: cubic-bezier(0.34, 1.2, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--color-bark);
+  -webkit-font-smoothing: antialiased;
+  background: #ebe4d8;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-gold) 40%, transparent);
+}
+
+/* —— Ambient liquid background —— */
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+    145deg,
+    #f8f2ea 0%,
+    #ebe4d8 35%,
+    #e8e0d4 65%,
+    #f5efe6 100%
+  );
+}
+
+.liquid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.liquid-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(72px);
+  opacity: 0.55;
+  will-change: transform;
+}
+
+.liquid-blob-1 {
+  width: 55vmax;
+  height: 55vmax;
+  top: -18%;
+  left: -12%;
+  background: radial-gradient(circle at 30% 30%, #a8c4a6 0%, transparent 65%);
+  animation: blob-drift-1 22s var(--ease-smooth) infinite;
+}
+
+.liquid-blob-2 {
+  width: 45vmax;
+  height: 45vmax;
+  bottom: -15%;
+  right: -8%;
+  background: radial-gradient(circle at 60% 40%, #d4b896 0%, transparent 65%);
+  animation: blob-drift-2 26s var(--ease-smooth) infinite;
+}
+
+.liquid-blob-3 {
+  width: 35vmax;
+  height: 35vmax;
+  top: 40%;
+  left: 45%;
+  background: radial-gradient(circle at 50% 50%, #d4a5a0 0%, transparent 70%);
+  animation: blob-drift-3 20s var(--ease-smooth) infinite;
+  opacity: 0.35;
+}
+
+@keyframes blob-drift-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  40% {
+    transform: translate(6%, 8%) scale(1.08);
+  }
+  70% {
+    transform: translate(3%, -4%) scale(0.96);
+  }
+}
+
+@keyframes blob-drift-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-8%, -6%) scale(1.06);
+  }
+}
+
+@keyframes blob-drift-3 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-5%, 6%) scale(1.1);
+  }
+  66% {
+    transform: translate(6%, -3%) scale(0.92);
+  }
+}
+
+/* —— Glass surfaces —— */
+.glass {
+  background: color-mix(in srgb, white 55%, transparent);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid color-mix(in srgb, white 65%, transparent);
+  box-shadow:
+    0 8px 32px color-mix(in srgb, var(--color-bark) 6%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
+}
+
+.glass-dark {
+  background: color-mix(in srgb, var(--color-bark) 82%, transparent);
+  backdrop-filter: blur(24px) saturate(1.3);
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  border-bottom: 1px solid color-mix(in srgb, white 12%, transparent);
+  box-shadow: 0 4px 24px color-mix(in srgb, var(--color-bark) 20%, transparent);
+}
+
+.glass-card {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, white 78%, transparent) 0%,
+    color-mix(in srgb, white 52%, transparent) 100%
+  );
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid color-mix(in srgb, white 55%, transparent);
+  box-shadow:
+    0 4px 20px color-mix(in srgb, var(--color-bark) 7%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 80%, transparent);
+  transition:
+    transform 0.35s var(--ease-liquid),
+    box-shadow 0.35s var(--ease-smooth),
+    border-color 0.3s ease;
+}
+
+.glass-card-male {
+  border-color: color-mix(in srgb, #4a6fa5 28%, transparent);
+  box-shadow:
+    0 4px 20px color-mix(in srgb, #4a6fa5 8%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 80%, transparent);
+}
+
+.glass-card-female {
+  border-color: color-mix(in srgb, var(--color-rose) 32%, transparent);
+  box-shadow:
+    0 4px 20px color-mix(in srgb, var(--color-rose) 10%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 80%, transparent);
+}
+
+.glass-input {
+  background: color-mix(in srgb, white 65%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, white 50%, transparent);
+  box-shadow:
+    0 2px 12px color-mix(in srgb, var(--color-bark) 5%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 60%, transparent);
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.35s var(--ease-smooth),
+    transform 0.25s var(--ease-liquid);
+}
+
+.glass-input:focus {
+  border-color: color-mix(in srgb, var(--color-sage) 50%, transparent);
+  box-shadow:
+    0 4px 20px color-mix(in srgb, var(--color-sage) 15%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 70%, transparent);
+  transform: translateY(-1px);
+}
+
+.glass-modal {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, white 88%, transparent) 0%,
+    color-mix(in srgb, #f8f2ea 92%, transparent) 100%
+  );
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid color-mix(in srgb, white 60%, transparent);
+  box-shadow:
+    0 24px 64px color-mix(in srgb, var(--color-bark) 18%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 75%, transparent);
+}
+
+.liquid-overlay {
+  background: color-mix(in srgb, var(--color-bark) 35%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: overlay-in 0.35s var(--ease-smooth);
+}
+
+.glass-toolbar {
+  background: color-mix(in srgb, white 60%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid color-mix(in srgb, white 55%, transparent);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--color-bark) 8%, transparent);
+  transition:
+    transform 0.25s var(--ease-liquid),
+    background 0.2s ease;
+}
+
+.glass-toolbar:hover {
+  transform: translateY(-2px);
+  background: color-mix(in srgb, white 78%, transparent);
+}
+
+.glass-toolbar:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.btn-liquid {
+  transition:
+    transform 0.3s var(--ease-liquid),
+    box-shadow 0.3s var(--ease-smooth),
+    background 0.2s ease;
+}
+
+.btn-liquid:hover {
+  transform: translateY(-1px);
+}
+
+.btn-liquid:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-primary {
+  background: linear-gradient(
+    135deg,
+    var(--color-bark) 0%,
+    color-mix(in srgb, var(--color-bark) 85%, var(--color-sage)) 100%
+  );
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--color-bark) 25%, transparent);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--color-bark) 30%, transparent);
+}
+
+.tree-canvas {
+  cursor: grab;
+  touch-action: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 40%, color-mix(in srgb, white 40%, transparent), transparent),
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--color-bark) 6%, transparent) 1px, transparent 0);
+  background-size: 100% 100%, 28px 28px;
+}
+
+.tree-canvas:active {
+  cursor: grabbing;
+}
+
+.tree-nodes-3d {
+  transform-style: preserve-3d;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.person-card-slot {
+  overflow: visible;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.descendant-branch-hint-interactive {
+  pointer-events: auto;
+  z-index: 120;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.descendant-branch-hint-svg {
+  display: block;
+}
+
+.tree-nodes-3d .person-card-slot {
+  height: var(--card-h, 88px);
+  overflow: visible;
+}
+
+.tree-nodes-3d .person-card-3d {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.tree-nodes-3d .person-card-face {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow-x: clip;
+  overflow-y: hidden;
+  box-sizing: border-box;
+}
+
+.tree-nodes-3d .person-card-content {
+  max-width: 100%;
+}
+
+.tree-nodes-3d .person-card-content > .flex {
+  max-width: 100%;
+}
+
+.tree-nodes-3d .person-card-name {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+.tree-nodes-3d .person-card-slot:has(.person-card-3d.is-hovering),
+.tree-nodes-3d .person-card-slot:has(.person-card-3d:hover:not(.person-card-3d-compact)) {
+  height: auto;
+  overflow: visible;
+}
+
+.tree-nodes-3d .person-card-slot:has(.person-card-3d.is-hovering) .person-card-3d,
+.tree-nodes-3d .person-card-slot:has(.person-card-3d:hover:not(.person-card-3d-compact)) .person-card-3d {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.tree-nodes-3d .person-card-slot:has(.person-card-3d.is-hovering) .person-card-face,
+.tree-nodes-3d .person-card-slot:has(.person-card-3d:hover:not(.person-card-3d-compact)) .person-card-face {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.tree-nodes-3d .person-card-slot[data-deep='true'] .person-card-name {
+  line-height: 1.3;
+}
+
+.tree-nodes-3d .person-card-3d.is-hovering,
+.tree-nodes-3d .person-card-3d:hover:not(.person-card-3d-compact) {
+  height: auto;
+  overflow: visible;
+}
+
+.tree-nodes-3d .person-card-3d.is-hovering .person-card-face,
+.tree-nodes-3d .person-card-3d:hover:not(.person-card-3d-compact) .person-card-face {
+  height: auto;
+  overflow: visible;
+}
+
+.person-card-slot:has(.person-card-3d.is-hovering),
+.person-card-slot:has(.person-card-3d:hover) {
+  z-index: 60;
+}
+
+.person-card-3d.is-hovering,
+.person-card-3d:hover:not(.person-card-3d-compact) {
+  z-index: 60;
+}
+
+.person-card-face.is-expanded {
+  min-width: 13.5rem;
+  width: max-content;
+  max-width: 17.5rem;
+}
+
+.person-card-hover-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-top: 0;
+  transition:
+    grid-template-rows 0.38s var(--ease-smooth),
+    opacity 0.28s ease,
+    margin-top 0.38s var(--ease-smooth);
+}
+
+.person-card-3d.is-hovering .person-card-hover-panel,
+.person-card-3d:hover:not(.person-card-3d-compact) .person-card-hover-panel {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-top: 0.65rem;
+}
+
+.person-card-hover-inner {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid color-mix(in srgb, white 14%, transparent);
+}
+
+.person-card-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.person-card-detail-label {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #faf8f4 55%, transparent);
+}
+
+.person-card-detail-value {
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: color-mix(in srgb, #faf8f4 92%, transparent);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+  white-space: normal;
+  word-break: break-word;
+}
+
+.person-card-3d.is-hovering .person-card-name,
+.person-card-3d:hover:not(.person-card-3d-compact) .person-card-name {
+  overflow: visible;
+}
+
+/* —— 3D person cards —— */
+.person-card-3d {
+  position: relative;
+  display: block;
+  width: 180px;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  transform-style: preserve-3d;
+  transition: transform 0.12s ease-out;
+  will-change: transform;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.person-card-3d-compact {
+  width: 100%;
+  max-width: none;
+  transition: none;
+}
+
+.person-card-face {
+  position: relative;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  border-radius: 1rem;
+  padding: 0.65rem 0.72rem;
+  background: linear-gradient(165deg, #4a3828 0%, #322618 45%, #261c12 100%);
+  border: 1px solid color-mix(in srgb, white 14%, transparent);
+  transform: translateZ(0);
+  transform-style: preserve-3d;
+  transition:
+    box-shadow 0.35s var(--ease-smooth),
+    transform 0.35s var(--ease-liquid);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, black 25%, transparent),
+    0 2px 4px color-mix(in srgb, black 25%, transparent),
+    0 8px 20px color-mix(in srgb, black 30%, transparent),
+    0 16px 36px color-mix(in srgb, black 22%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 18%, transparent),
+    inset 0 -4px 10px color-mix(in srgb, black 35%, transparent);
+}
+
+.person-card-face.lifted {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, white 10%, transparent),
+    0 4px 10px color-mix(in srgb, black 30%, transparent),
+    0 14px 32px color-mix(in srgb, black 35%, transparent),
+    0 28px 52px color-mix(in srgb, black 28%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 22%, transparent),
+    inset 0 -3px 8px color-mix(in srgb, black 30%, transparent);
+}
+
+.person-card-face-male {
+  border-color: color-mix(in srgb, #7eb0e8 35%, transparent);
+  background: linear-gradient(165deg, #2e3d52 0%, #243347 48%, #1a2838 100%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #4a6fa5 30%, transparent),
+    0 3px 8px color-mix(in srgb, black 28%, transparent),
+    0 12px 28px color-mix(in srgb, #1a2838 50%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
+    inset 0 -4px 10px color-mix(in srgb, black 40%, transparent);
+}
+
+.person-card-face-female {
+  border-color: color-mix(in srgb, #e8b4b0 32%, transparent);
+  background: linear-gradient(165deg, #523c3a 0%, #423030 48%, #352626 100%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-rose) 28%, transparent),
+    0 3px 8px color-mix(in srgb, black 28%, transparent),
+    0 12px 28px color-mix(in srgb, #352626 55%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
+    inset 0 -4px 10px color-mix(in srgb, black 38%, transparent);
+}
+
+.person-card-edge {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, black 30%, transparent);
+}
+
+.person-card-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    125deg,
+    color-mix(in srgb, white 14%, transparent) 0%,
+    transparent 42%,
+    transparent 68%,
+    color-mix(in srgb, black 12%, transparent) 100%
+  );
+  opacity: 1;
+}
+
+.person-card-content {
+  position: relative;
+  z-index: 1;
+}
+
+.person-card-name {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #faf8f4;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 45%);
+  white-space: nowrap;
+}
+
+.person-card-meta {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: color-mix(in srgb, #faf8f4 82%, transparent);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 35%);
+}
+
+.person-card-place {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--color-gold) 75%, #faf8f4);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 35%);
+}
+
+.person-card-content .avatar-ring {
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, white 22%, transparent),
+    color-mix(in srgb, white 6%, transparent)
+  );
+  border: 1px solid color-mix(in srgb, white 20%, transparent);
+  box-shadow:
+    inset 0 1px 2px color-mix(in srgb, white 25%, transparent),
+    inset 0 -2px 4px color-mix(in srgb, black 35%, transparent),
+    0 3px 10px color-mix(in srgb, black 35%, transparent);
+}
+
+.person-card-3d.selected .person-card-face {
+  border-color: color-mix(in srgb, var(--color-gold) 70%, transparent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--color-gold) 45%, transparent),
+    0 6px 16px color-mix(in srgb, var(--color-gold) 22%, transparent),
+    0 16px 36px color-mix(in srgb, black 35%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 22%, transparent),
+    inset 0 -2px 8px color-mix(in srgb, black 30%, transparent);
+}
+
+.person-card-3d.selected .person-card-name {
+  color: #fffef9;
+}
+
+.person-card-3d.expanded-branch .person-card-face {
+  border-color: color-mix(in srgb, var(--color-sage-light) 75%, transparent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--color-sage-light) 50%, transparent),
+    0 8px 20px color-mix(in srgb, var(--color-sage) 28%, transparent),
+    0 16px 36px color-mix(in srgb, black 35%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 22%, transparent),
+    inset 0 -2px 8px color-mix(in srgb, black 30%, transparent);
+}
+
+.marriage-chain-link {
+  filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--color-bark) 25%, transparent));
+}
+
+.marriage-chain-connector {
+  stroke: var(--color-gold);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+}
+
+.marriage-chain-ring {
+  fill: color-mix(in srgb, var(--color-gold) 14%, transparent);
+  stroke: var(--color-gold);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+
+.descendant-branch-hint-interactive:hover .descendant-branch-node {
+  opacity: 1;
+  stroke-width: 1.5;
+}
+
+.descendant-branch-stem,
+.descendant-branch-fork {
+  stroke: var(--color-sage-light);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  opacity: 0.72;
+}
+
+.descendant-branch-stem {
+  stroke-dasharray: 3 3;
+  animation: descendant-stem-pulse 2.4s ease-in-out infinite;
+}
+
+.descendant-branch-node {
+  pointer-events: none;
+  fill: color-mix(in srgb, var(--color-sage-light) 35%, transparent);
+  stroke: var(--color-sage-light);
+  stroke-width: 1.1;
+  opacity: 0.85;
+}
+
+.descendant-branch-node-center {
+  fill: color-mix(in srgb, var(--color-gold) 30%, transparent);
+  stroke: var(--color-gold);
+  animation: descendant-node-glow 2.4s ease-in-out infinite;
+}
+
+.descendant-branch-node-left {
+  animation: descendant-node-glow 2.4s ease-in-out infinite 0.2s;
+}
+
+.descendant-branch-node-right {
+  animation: descendant-node-glow 2.4s ease-in-out infinite 0.4s;
+}
+
+@keyframes descendant-stem-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes descendant-node-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .descendant-branch-stem,
+  .descendant-branch-node-left,
+  .descendant-branch-node-center,
+  .descendant-branch-node-right {
+    animation: none;
+  }
+}
+
+.avatar-ring-3d {
+  box-shadow:
+    inset 0 1px 2px color-mix(in srgb, white 25%, transparent),
+    inset 0 -2px 4px color-mix(in srgb, black 35%, transparent),
+    0 3px 10px color-mix(in srgb, black 35%, transparent);
+}
+
+.person-card-3d:active:not(.person-card-3d-compact) {
+  transition: transform 0.08s ease-out;
+}
+
+.person-card-3d:active:not(.person-card-3d-compact) .person-card-face {
+  box-shadow:
+    0 2px 6px color-mix(in srgb, black 35%, transparent),
+    inset 0 3px 8px color-mix(in srgb, black 45%, transparent);
+}
+
+.member-avatar-photo {
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center top;
+  border: 1px solid color-mix(in srgb, white 25%, transparent);
+}
+
+.member-avatar-emoji {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  line-height: 1;
+}
+
+.member-avatar-sm {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 1rem;
+}
+
+.member-avatar-md {
+  width: 2.25rem;
+  height: 2.25rem;
+  font-size: 1.25rem;
+}
+
+.member-avatar-lg {
+  width: 3.5rem;
+  height: 3.5rem;
+  font-size: 2rem;
+}
+
+.person-card-content .avatar-ring.member-avatar-photo,
+.person-card-content .avatar-ring.member-avatar-emoji {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+}
+
+.avatar-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, white 90%, transparent),
+    color-mix(in srgb, white 40%, transparent)
+  );
+  box-shadow:
+    inset 0 1px 2px color-mix(in srgb, white 80%, transparent),
+    0 2px 8px color-mix(in srgb, var(--color-bark) 8%, transparent);
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.fade-in {
+  animation: fade-in 0.4s var(--ease-smooth);
+}
+
+.slide-in-right {
+  animation: slide-in-right 0.45s var(--ease-liquid);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-blob,
+  .fade-in,
+  .slide-in-right,
+  .liquid-overlay {
+    animation: none;
+  }
+
+  .person-card-3d,
+  .person-card-face,
+  .glass-card,
+  .glass-toolbar,
+  .btn-liquid,
+  .glass-input {
+    transition: none;
+  }
+}
