@@ -1,8 +1,28 @@
 import type { Handler } from '@netlify/functions'
 import jwt from 'jsonwebtoken'
-import type { FamilyMember } from '../../src/types'
-import { getMembers, setMembers } from '../../server/store.js'
+import seedData from './data/family.json'
+import { getStore } from '@netlify/blobs'
 
+type FamilyMember = {
+  id: string
+  firstName: string
+  lastName: string
+  gender: 'male' | 'female' | 'other'
+  birthYear?: string
+  deathYear?: string
+  birthPlace?: string
+  profession?: string
+  bio?: string
+  avatarUrl?: string
+  spouseId?: string
+  fatherId?: string
+  motherId?: string
+  generation?: number
+  anniversary?: string
+}
+
+const SEED = seedData as FamilyMember[]
+const BLOB_KEY = 'members'
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'krishnamachari'
 const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-change-me'
 
@@ -11,6 +31,24 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+}
+
+async function loadMembers(): Promise<FamilyMember[]> {
+  try {
+    const store = getStore({ name: 'family-tree', consistency: 'strong' })
+    const data = await store.get(BLOB_KEY, { type: 'json' })
+    if (data) return data as FamilyMember[]
+    await store.setJSON(BLOB_KEY, SEED)
+    return SEED
+  } catch (err) {
+    console.error('Blob read failed, using seed:', err)
+    return SEED
+  }
+}
+
+async function saveMembers(members: FamilyMember[]): Promise<void> {
+  const store = getStore({ name: 'family-tree', consistency: 'strong' })
+  await store.setJSON(BLOB_KEY, members)
 }
 
 function requestPath(event: { path: string; rawUrl?: string }): string {
@@ -48,7 +86,7 @@ export const handler: Handler = async (event) => {
     }
 
     if (path === '/api/members' && event.httpMethod === 'GET') {
-      const members = await getMembers()
+      const members = await loadMembers()
       return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(members) }
     }
 
@@ -81,7 +119,7 @@ export const handler: Handler = async (event) => {
           body: JSON.stringify({ error: 'Expected an array of members' }),
         }
       }
-      await setMembers(members as FamilyMember[])
+      await saveMembers(members as FamilyMember[])
       return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ ok: true }) }
     }
 

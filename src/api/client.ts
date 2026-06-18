@@ -20,11 +20,20 @@ export function isAdminSession(): boolean {
 }
 
 export async function fetchMembers(): Promise<FamilyMember[]> {
-  const res = await fetch(`${API_BASE}/api/members`)
-  if (!res.ok) {
+  try {
+    const res = await fetch(`${API_BASE}/api/members`)
+    if (res.ok) {
+      return res.json() as Promise<FamilyMember[]>
+    }
+  } catch {
+    // try static fallback below
+  }
+
+  const fallback = await fetch(`${API_BASE}/members.json`)
+  if (!fallback.ok) {
     throw new Error('Could not load family data')
   }
-  return res.json() as Promise<FamilyMember[]>
+  return fallback.json() as Promise<FamilyMember[]>
 }
 
 export async function saveMembers(members: FamilyMember[]): Promise<void> {
