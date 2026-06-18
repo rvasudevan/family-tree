@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import seedData from '../src/data/family.json' with { type: 'json' }
+import seedData from './seed/family.json' with { type: 'json' }
 import type { FamilyMember } from '../src/types'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -43,13 +43,18 @@ async function setMembersToFile(members: FamilyMember[]): Promise<void> {
 }
 
 async function getMembersFromBlob(): Promise<FamilyMember[]> {
-  const { getStore } = await import('@netlify/blobs')
-  const store = getStore({ name: 'family-tree', consistency: 'strong' })
-  const data = await store.get(BLOB_KEY, { type: 'json' })
-  if (data) return data as FamilyMember[]
-  const seed = await readSeed()
-  await store.setJSON(BLOB_KEY, seed)
-  return seed
+  try {
+    const { getStore } = await import('@netlify/blobs')
+    const store = getStore({ name: 'family-tree', consistency: 'strong' })
+    const data = await store.get(BLOB_KEY, { type: 'json' })
+    if (data) return data as FamilyMember[]
+    const seed = await readSeed()
+    await store.setJSON(BLOB_KEY, seed)
+    return seed
+  } catch (err) {
+    console.error('Netlify Blobs unavailable, using seed data:', err)
+    return readSeed()
+  }
 }
 
 async function setMembersToBlob(members: FamilyMember[]): Promise<void> {
