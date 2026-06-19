@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import type { FamilyMember } from '../types'
 import type { FamilyGraph } from '../utils/relationships'
-import { cardDisplayName, lifespan, type CardDisplayRole } from '../utils/family'
+import { cardBirthLabel, cardDisplayName, type CardDisplayRole } from '../utils/family'
 import { MemberAvatar } from './MemberAvatar'
 import { PersonCardHoverDetails } from './PersonCardHoverDetails'
 
@@ -44,7 +44,7 @@ export function PersonCard({
     return () => mq.removeEventListener('change', onChange)
   }, [])
 
-  const life = lifespan(member)
+  const birthLabel = cardBirthLabel(member)
   const genderClass =
     member.gender === 'male'
       ? 'person-card-face-male'
@@ -92,6 +92,7 @@ export function PersonCard({
       }}
       onPointerLeave={resetTilt}
       style={{ transform }}
+      aria-label={birthLabel ? `${cardDisplayName(member, displayRole)}, born ${birthLabel}` : cardDisplayName(member, displayRole)}
       className={`person-card-3d ${hovering ? 'is-hovering' : ''} ${selected ? 'selected' : ''} ${expanded ? 'expanded-branch' : ''} ${compact ? 'person-card-3d-compact' : ''}`}
     >
       <span
@@ -102,13 +103,13 @@ export function PersonCard({
         <span className="person-card-content">
           <span className="flex items-start gap-2.5">
             <MemberAvatar member={member} size="md" className="avatar-ring avatar-ring-3d" />
-            <span className="min-w-0 flex-1">
+            <span className="min-w-max flex-1">
               <span className="person-card-name block leading-tight">
                 {cardDisplayName(member, displayRole)}
               </span>
-              {life && (
+              {birthLabel && (
                 <span className="person-card-meta mt-0.5 block">
-                  {life}
+                  {birthLabel}
                 </span>
               )}
               {member.birthPlace && showBirthPlace && !compact && !hovering && (

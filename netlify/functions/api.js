@@ -1,30 +1,10 @@
-import type { Handler } from '@netlify/functions'
-import jwt from 'jsonwebtoken'
-import seedData from './data/family.json'
-import { getStore } from '@netlify/blobs'
+const jwt = require('jsonwebtoken')
+const { getStore } = require('@netlify/blobs')
+const seed = require('./data/family.json')
 
-type FamilyMember = {
-  id: string
-  firstName: string
-  lastName: string
-  gender: 'male' | 'female' | 'other'
-  birthYear?: string
-  deathYear?: string
-  birthPlace?: string
-  profession?: string
-  bio?: string
-  avatarUrl?: string
-  spouseId?: string
-  fatherId?: string
-  motherId?: string
-  generation?: number
-  anniversary?: string
-}
-
-const SEED = seedData as FamilyMember[]
 const BLOB_KEY = 'members'
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? 'krishnamachari'
-const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-change-me'
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'krishnamachari'
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me'
 
 const corsHeaders = {
   'Content-Type': 'application/json',
@@ -33,25 +13,25 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
 }
 
-async function loadMembers(): Promise<FamilyMember[]> {
+async function loadMembers() {
   try {
     const store = getStore({ name: 'family-tree', consistency: 'strong' })
     const data = await store.get(BLOB_KEY, { type: 'json' })
-    if (data) return data as FamilyMember[]
-    await store.setJSON(BLOB_KEY, SEED)
-    return SEED
+    if (data) return data
+    await store.setJSON(BLOB_KEY, seed)
+    return seed
   } catch (err) {
     console.error('Blob read failed, using seed:', err)
-    return SEED
+    return seed
   }
 }
 
-async function saveMembers(members: FamilyMember[]): Promise<void> {
+async function saveMembers(members) {
   const store = getStore({ name: 'family-tree', consistency: 'strong' })
   await store.setJSON(BLOB_KEY, members)
 }
 
-function requestPath(event: { path: string; rawUrl?: string }): string {
+function requestPath(event) {
   if (event.rawUrl) {
     try {
       return new URL(event.rawUrl).pathname
@@ -62,9 +42,9 @@ function requestPath(event: { path: string; rawUrl?: string }): string {
   return event.path
 }
 
-function verifyAdmin(event: { headers: Record<string, string | undefined> }): boolean {
-  const header = event.headers.authorization ?? event.headers.Authorization
-  if (!header?.startsWith('Bearer ')) return false
+function verifyAdmin(event) {
+  const header = event.headers.authorization || event.headers.Authorization
+  if (!header || !header.startsWith('Bearer ')) return false
   try {
     jwt.verify(header.slice(7), JWT_SECRET)
     return true
@@ -73,7 +53,7 @@ function verifyAdmin(event: { headers: Record<string, string | undefined> }): bo
   }
 }
 
-export const handler: Handler = async (event) => {
+exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: corsHeaders, body: '' }
   }
@@ -91,7 +71,7 @@ export const handler: Handler = async (event) => {
     }
 
     if (path === '/api/auth/login' && event.httpMethod === 'POST') {
-      const body = JSON.parse(event.body ?? '{}') as { password?: string }
+      const body = JSON.parse(event.body || '{}')
       if (body.password !== ADMIN_PASSWORD) {
         return {
           statusCode: 401,
@@ -111,7 +91,7 @@ export const handler: Handler = async (event) => {
           body: JSON.stringify({ error: 'Unauthorized' }),
         }
       }
-      const members = JSON.parse(event.body ?? '[]')
+      const members = JSON.parse(event.body || '[]')
       if (!Array.isArray(members)) {
         return {
           statusCode: 400,
@@ -119,7 +99,7 @@ export const handler: Handler = async (event) => {
           body: JSON.stringify({ error: 'Expected an array of members' }),
         }
       }
-      await saveMembers(members as FamilyMember[])
+      await saveMembers(members)
       return { statusCode: 200, headers: corsHeaders, body: JSON.stringify({ ok: true }) }
     }
 

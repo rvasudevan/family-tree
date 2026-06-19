@@ -104,37 +104,58 @@ export class FamilyGraph {
     return false
   }
 
-  /** One generation visible by default; expandedId reveals that person's children only */
-  buildExpandableTree(focusId: string, expandedId: string | null): TreeNode | null {
-    const root = this.buildTree(focusId, 1)
-    if (!root || !expandedId) return root
+  /** Focus couple (and ancestors) only until a branch is expanded */
+  buildExpandableTree(
+    focusId: string,
+    expandedId: string | null,
+    revealedChildCount: number = 0,
+  ): TreeNode | null {
+    const root = this.buildTree(focusId, 0)
+    if (!root || !expandedId || revealedChildCount <= 0) return root
 
-    if (!this.isAncestorOf(focusId, expandedId)) return root
+    if (!this.isAncestorOf(focusId, expandedId) && expandedId !== focusId) return root
 
-    return {
-      ...root,
-      children: root.children.map((child) =>
-        this.isAncestorOf(child.member.id, expandedId)
-          ? this.expandBranch(child, expandedId)
-          : child,
-      ),
+    const childMembers = this.getChildren(root.member)
+    root.children = childMembers.map((child) => {
+      const childNode = this.buildTree(child.id, 0)!
+      if (child.id === expandedId || this.isAncestorOf(child.id, expandedId)) {
+        return this.expandBranch(childNode, expandedId, revealedChildCount)
+      }
+      return childNode
+    })
+
+    if (expandedId === focusId) {
+      root.children = root.children.map((child) => ({ ...child, children: [] }))
     }
+
+    return root
   }
 
-  private expandBranch(node: TreeNode, expandedId: string): TreeNode {
+  private expandBranch(node: TreeNode, expandedId: string, revealedChildCount: number): TreeNode {
     if (node.member.id === expandedId) {
-      return this.buildTree(expandedId, 1)!
+      const childMembers = this.getChildren(node.member)
+      return {
+        ...node,
+        children: childMembers
+          .map((child) => {
+            const childNode = this.buildTree(child.id, 0)
+            if (!childNode) return null
+            return { ...childNode, children: [] as TreeNode[] }
+          })
+          .filter((n): n is TreeNode => n !== null),
+      }
     }
 
-    const rebuilt = this.buildTree(node.member.id, 1)!
+    const childMembers = this.getChildren(node.member)
     return {
       ...node,
-      spouse: rebuilt.spouse,
-      children: rebuilt.children.map((child) =>
-        this.isAncestorOf(child.member.id, expandedId)
-          ? this.expandBranch(child, expandedId)
-          : { ...child, children: [] },
-      ),
+      children: childMembers.map((child) => {
+        const childNode = this.buildTree(child.id, 0)!
+        if (child.id === expandedId || this.isAncestorOf(child.id, expandedId)) {
+          return this.expandBranch(childNode, expandedId, revealedChildCount)
+        }
+        return { ...childNode, children: [] }
+      }),
     }
   }
 

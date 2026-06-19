@@ -58,6 +58,16 @@ export function lifespan(member: FamilyMember): string | null {
   return null
 }
 
+/** Compact birth/death line for tree cards (no leading “b.” / “d.” on birth alone) */
+export function cardBirthLabel(member: FamilyMember): string | null {
+  const birth = member.birthYear?.trim()
+  const death = member.deathYear?.trim()
+  if (birth && death) return `${birth} – ${death}`
+  if (birth) return birth
+  if (death) return `d. ${death}`
+  return null
+}
+
 export function genderLabel(gender: FamilyMember['gender']): string {
   if (gender === 'male') return 'Male'
   if (gender === 'female') return 'Female'

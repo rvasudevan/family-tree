@@ -1,15 +1,15 @@
 id,name,birth_date,anniversary,birthplace,parent1_id,parent2_id,spouse_id,generation
-kr,R.Krishnamachari,,,"Vedanthangal, India",,,ka,1
-ka,Kannakavalli,,,"Vedanthangal, India",,,kr,1
-ve,K.Vedam,23 Oct,,"Madras, India",kr,ka,su,2
+kr,R.Krishnamachari,25 Apr 1898,,"Vedanthangal, India",,,ka,1
+ka,Kannakavalli,15 Apr to 13 May 1906,,"Vedanthangal, India",,,kr,1
+ve,K.Vedam,23 Oct 1923,,"Madras, India",kr,ka,su,2
 su,V.Sundararajan,11 Jan,,,,,ve,2
-ko,Komala Chari,23 Sep,,"Madras, India",kr,ka,ch,2
+ko,Komala Chari,23 Sep 1925,,"Madras, India",kr,ka,ch,2
 ch,R.S.Chari,,,,,,ko,2
-sh,Shantha Rangaswamy,12 Mar,,"Madras, India",kr,ka,rw,2
+sh,Shantha Rangaswamy,12 Mar 1927,,"Madras, India",kr,ka,rw,2
 rw,R.S.Rangaswamy,,,,,,sh,2
-ja,Jaya Ramanujam,3 Aug,19 Aug,"Madras, India",kr,ka,pr,2
+ja,Jaya Ramanujam,3 Aug 1929,19 Aug,"Madras, India",kr,ka,pr,2
 pr,P.T.Ramanujam,13 Jan,19 Aug,,,,ja,2
-pa,K.Parthasarathi,12 May,13 Nov,"Madras, India",kr,ka,vp,2
+pa,K.Parthasarathi,12 May 1932,13 Nov,"Madras, India",kr,ka,vp,2
 vp,Vasantha Parthasarathi,28 Oct,13 Nov,,,,pa,2
 jn,Janaki Raghavan,13 Apr,,"Madras, India",kr,ka,nr,2
 nr,N.S.Raghavan,30 Sep,,,,,jn,2

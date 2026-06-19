@@ -1,13 +1,12 @@
 import type { FamilyMember, LayoutEdge, LayoutNode, TreeLayout, TreeNode } from '../types'
-import { cardDisplayName } from './family'
+import { cardBirthLabel, cardDisplayName } from './family'
 
 const CARD_W = 180
 const CARD_W_DEEP = 228
-const CARD_H = 88
-const CARD_H_DEEP = 96
-const CARD_CHROME = 72
-const PX_PER_CHAR = 8.2
-const CARD_W_MAX = 300
+const CARD_H = 100
+const CARD_H_DEEP = 108
+const CARD_CHROME = 78
+const PX_PER_CHAR = 9.2
 const H_GAP = 48
 const H_GAP_DEEP = 64
 const V_GAP = 100
@@ -25,16 +24,23 @@ function cardHeightForLevel(level: number): number {
   return level >= 2 ? CARD_H_DEEP : CARD_H
 }
 
+function cardHeightForMember(member: FamilyMember, level: number): number {
+  const base = cardHeightForLevel(level)
+  return cardBirthLabel(member) ? base + 18 : base
+}
+
 function hGapForLevel(level: number): number {
   return level >= 2 ? H_GAP_DEEP : H_GAP
 }
 
-/** Fit card width to the displayed name so labels are not clipped */
+/** Fit card width to the displayed name and birth line so labels are not clipped */
 function measureCardWidth(member: FamilyMember, level: number): number {
   const floor = cardWidthFloor(level)
   const name = cardDisplayName(member)
-  const needed = Math.ceil(name.length * PX_PER_CHAR) + CARD_CHROME
-  return Math.max(floor, Math.min(needed, CARD_W_MAX))
+  const birth = cardBirthLabel(member) ?? ''
+  const longest = Math.max(name.length, birth.length)
+  const needed = Math.ceil(longest * PX_PER_CHAR) + CARD_CHROME
+  return Math.max(floor, needed)
 }
 
 function coupleSlotWidth(
@@ -409,7 +415,7 @@ function addNode(
     role,
     depth,
     cardW: measureCardWidth(member, depth),
-    cardH: cardHeightForLevel(depth),
+    cardH: cardHeightForMember(member, depth),
   })
 }
 
