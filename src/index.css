@@ -311,39 +311,60 @@ body {
   cursor: pointer;
 }
 
+.ancestor-branch-hint-interactive {
+  pointer-events: auto;
+  z-index: 10;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ancestor-branch-hint-interactive:hover .descendant-branch-node-center {
+  opacity: 1;
+  stroke-width: 1.5;
+}
+
 .descendant-branch-hint-svg {
   display: block;
 }
 
 .tree-nodes-3d .person-card-slot {
   min-height: var(--card-h, 100px);
-  height: auto;
   overflow: visible;
 }
 
 .tree-nodes-3d .person-card-3d {
   width: 100%;
-  height: auto;
-  min-height: var(--card-h, 100px);
-  max-height: none;
+  height: 100%;
+  min-height: 100%;
+  max-height: 100%;
   overflow: visible;
 }
 
 .tree-nodes-3d .person-card-face {
-  height: auto;
-  min-height: var(--card-h, 100px);
-  max-height: none;
+  height: 100%;
+  min-height: 100%;
+  max-height: 100%;
   overflow: visible;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .tree-nodes-3d .person-card-meta {
-  font-size: 0.78rem;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 500;
   line-height: 1.25;
-  color: color-mix(in srgb, var(--color-gold) 88%, #faf8f4);
+  color: color-mix(in srgb, var(--color-cream) 84%, var(--color-gold));
   white-space: nowrap;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 45%);
+  text-shadow:
+    -1px -1px 0 color-mix(in srgb, var(--color-gold) 24%, transparent),
+    1px 1px 0 rgb(0 0 0 / 58%),
+    0 2px 3px rgb(0 0 0 / 48%);
+  width: max-content;
+  max-width: 100%;
 }
 
 .tree-nodes-3d .person-card-content {
@@ -356,28 +377,30 @@ body {
 
 .tree-nodes-3d .person-card-name {
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 14px;
+  letter-spacing: normal;
   white-space: nowrap;
   overflow: visible;
   max-width: none;
+  width: max-content;
 }
 
-.tree-nodes-3d .person-card-slot:has(.person-card-3d.is-hovering),
-.tree-nodes-3d .person-card-slot:has(.person-card-3d:hover:not(.person-card-3d-compact)) {
-  height: auto;
+.tree-nodes-3d .person-card-slot:has(.person-card-3d.is-hovering) {
+  z-index: 520 !important;
   overflow: visible;
+  height: auto;
+  max-height: none;
 }
 
-.tree-nodes-3d .person-card-slot:has(.person-card-3d.is-hovering) .person-card-3d,
-.tree-nodes-3d .person-card-slot:has(.person-card-3d:hover:not(.person-card-3d-compact)) .person-card-3d {
+.tree-nodes-3d .person-card-slot:has(.person-card-3d.is-hovering) .person-card-3d {
   height: auto;
   max-height: none;
   overflow: visible;
 }
 
-.tree-nodes-3d .person-card-slot:has(.person-card-3d.is-hovering) .person-card-face,
-.tree-nodes-3d .person-card-slot:has(.person-card-3d:hover:not(.person-card-3d-compact)) .person-card-face {
+.tree-nodes-3d .person-card-slot:has(.person-card-3d.is-hovering) .person-card-face {
   height: auto;
+  min-height: var(--card-h, 100px);
   max-height: none;
   overflow: visible;
 }
@@ -392,26 +415,24 @@ body {
   max-width: none;
 }
 
-.tree-nodes-3d .person-card-3d.is-hovering,
-.tree-nodes-3d .person-card-3d:hover:not(.person-card-3d-compact) {
+.tree-nodes-3d .person-card-3d.is-hovering {
   height: auto;
   overflow: visible;
 }
 
-.tree-nodes-3d .person-card-3d.is-hovering .person-card-face,
-.tree-nodes-3d .person-card-3d:hover:not(.person-card-3d-compact) .person-card-face {
+.tree-nodes-3d .person-card-3d.is-hovering .person-card-face {
   height: auto;
+  min-height: var(--card-h, 100px);
   overflow: visible;
 }
 
-.person-card-slot:has(.person-card-3d.is-hovering),
-.person-card-slot:has(.person-card-3d:hover) {
-  z-index: 60;
+.tree-nodes-3d .person-card-3d.is-hovering .person-card-shine {
+  opacity: 0.25;
 }
 
-.person-card-3d.is-hovering,
-.person-card-3d:hover:not(.person-card-3d-compact) {
-  z-index: 60;
+.tree-nodes-3d .person-card-slot:has(.person-card-3d.selected),
+.tree-nodes-3d .person-card-slot:has(.person-card-3d.expanded-branch) {
+  z-index: 420 !important;
 }
 
 .person-card-face.is-expanded {
@@ -421,21 +442,26 @@ body {
 }
 
 .person-card-hover-panel {
-  display: grid;
-  grid-template-rows: 0fr;
-  opacity: 0;
+  display: none;
   margin-top: 0;
-  transition:
-    grid-template-rows 0.38s var(--ease-smooth),
-    opacity 0.28s ease,
-    margin-top 0.38s var(--ease-smooth);
 }
 
-.person-card-3d.is-hovering .person-card-hover-panel,
-.person-card-3d:hover:not(.person-card-3d-compact) .person-card-hover-panel {
+.person-card-3d.is-hovering .person-card-hover-panel {
+  display: grid;
   grid-template-rows: 1fr;
-  opacity: 1;
   margin-top: 0.65rem;
+  animation: hover-panel-in 0.28s var(--ease-smooth);
+}
+
+@keyframes hover-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .person-card-hover-inner {
@@ -443,8 +469,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  padding-top: 0.55rem;
-  border-top: 1px solid color-mix(in srgb, white 14%, transparent);
+  padding: 0.55rem 0.5rem 0.45rem;
+  border-radius: 0.55rem;
+  background: rgb(18 14 10 / 88%);
+  border-top: 1px solid color-mix(in srgb, white 22%, transparent);
 }
 
 .person-card-detail-row {
@@ -459,7 +487,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: color-mix(in srgb, #faf8f4 55%, transparent);
+  color: color-mix(in srgb, #faf8f4 82%, #c8c0b8);
 }
 
 .person-card-detail-value {
@@ -467,14 +495,13 @@ body {
   font-size: 0.76rem;
   font-weight: 500;
   line-height: 1.35;
-  color: color-mix(in srgb, #faf8f4 92%, transparent);
-  text-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+  color: #faf8f4;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 45%);
   white-space: normal;
   word-break: break-word;
 }
 
-.person-card-3d.is-hovering .person-card-name,
-.person-card-3d:hover:not(.person-card-3d-compact) .person-card-name {
+.person-card-3d.is-hovering .person-card-name {
   overflow: visible;
 }
 
@@ -491,7 +518,7 @@ body {
   cursor: pointer;
   text-align: left;
   transform-style: preserve-3d;
-  transition: transform 0.12s ease-out;
+  transition: transform 0.16s var(--ease-smooth);
   will-change: transform;
   -webkit-tap-highlight-color: transparent;
 }
@@ -502,59 +529,118 @@ body {
   transition: none;
 }
 
+.person-card-3d-compact .person-card-face {
+  transform: none;
+}
+
+.person-card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 1.05rem;
+  transform: translateZ(-7px) translateY(3px);
+  pointer-events: none;
+  background: linear-gradient(165deg, #2a2018 0%, #1c1510 55%, #12100c 100%);
+  box-shadow: 0 10px 22px rgb(0 0 0 / 38%);
+  transition: transform 0.35s var(--ease-liquid), box-shadow 0.35s var(--ease-smooth);
+}
+
+.person-card-3d:has(.person-card-face.lifted) .person-card-back {
+  transform: translateZ(-10px) translateY(5px);
+  box-shadow: 0 14px 28px rgb(0 0 0 / 42%);
+}
+
+.person-card-3d.is-hovering .person-card-back {
+  transform: translateZ(-12px) translateY(6px);
+  box-shadow: 0 18px 34px rgb(0 0 0 / 46%);
+}
+
+.person-card-back.person-card-face-male {
+  background: linear-gradient(165deg, #182824 0%, #101c18 55%, #0a1210 100%);
+}
+
+.person-card-back.person-card-face-female {
+  background: linear-gradient(165deg, #3e1e14 0%, #2c1410 55%, #1e0c08 100%);
+}
+
 .person-card-face {
   position: relative;
   display: block;
   width: 100%;
   box-sizing: border-box;
-  border-radius: 1rem;
+  border-radius: 1.05rem;
   padding: 0.65rem 0.72rem;
-  background: linear-gradient(165deg, #4a3828 0%, #322618 45%, #261c12 100%);
-  border: 1px solid color-mix(in srgb, white 14%, transparent);
-  transform: translateZ(0);
+  background: linear-gradient(168deg, #5c4a38 0%, #4a3a2c 38%, #3a2e22 72%, #32281e 100%);
+  border: 1px solid color-mix(in srgb, white 16%, transparent);
+  transform: translateZ(5px);
   transform-style: preserve-3d;
   transition:
     box-shadow 0.35s var(--ease-smooth),
     transform 0.35s var(--ease-liquid);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, black 25%, transparent),
-    0 2px 4px color-mix(in srgb, black 25%, transparent),
-    0 8px 20px color-mix(in srgb, black 30%, transparent),
-    0 16px 36px color-mix(in srgb, black 22%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 18%, transparent),
-    inset 0 -4px 10px color-mix(in srgb, black 35%, transparent);
+    0 1px 2px rgb(0 0 0 / 34%),
+    0 6px 14px rgb(0 0 0 / 28%),
+    0 14px 30px rgb(0 0 0 / 22%),
+    inset 1px 1px 0 color-mix(in srgb, white 28%, transparent),
+    inset 2px 8px 14px color-mix(in srgb, white 7%, transparent),
+    inset -1px -2px 4px color-mix(in srgb, black 28%, transparent),
+    inset 0 -4px 10px color-mix(in srgb, black 42%, transparent);
+  overflow: hidden;
+}
+
+.person-card-face::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    148deg,
+    color-mix(in srgb, white 24%, transparent) 0%,
+    color-mix(in srgb, white 8%, transparent) 22%,
+    transparent 46%,
+    transparent 68%,
+    color-mix(in srgb, black 16%, transparent) 100%
+  );
+  opacity: 0.9;
+  z-index: 0;
 }
 
 .person-card-face.lifted {
+  transform: translateZ(8px);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, white 10%, transparent),
-    0 4px 10px color-mix(in srgb, black 30%, transparent),
-    0 14px 32px color-mix(in srgb, black 35%, transparent),
-    0 28px 52px color-mix(in srgb, black 28%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 22%, transparent),
-    inset 0 -3px 8px color-mix(in srgb, black 30%, transparent);
+    0 2px 4px rgb(0 0 0 / 36%),
+    0 10px 22px rgb(0 0 0 / 32%),
+    0 22px 44px rgb(0 0 0 / 24%),
+    inset 1px 1px 0 color-mix(in srgb, white 32%, transparent),
+    inset 2px 10px 16px color-mix(in srgb, white 9%, transparent),
+    inset -1px -2px 4px color-mix(in srgb, black 26%, transparent),
+    inset 0 -3px 8px color-mix(in srgb, black 36%, transparent);
 }
 
 .person-card-face-male {
-  border-color: color-mix(in srgb, #7eb0e8 35%, transparent);
-  background: linear-gradient(165deg, #2e3d52 0%, #243347 48%, #1a2838 100%);
+  border-color: color-mix(in srgb, var(--color-sage-light) 48%, transparent);
+  background: linear-gradient(168deg, #3f5e54 0%, #314a42 40%, #263c36 74%, #1f332e 100%);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, #4a6fa5 30%, transparent),
-    0 3px 8px color-mix(in srgb, black 28%, transparent),
-    0 12px 28px color-mix(in srgb, #1a2838 50%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
-    inset 0 -4px 10px color-mix(in srgb, black 40%, transparent);
+    0 1px 2px rgb(0 0 0 / 34%),
+    0 6px 16px rgb(16 32 26 / 42%),
+    0 14px 30px rgb(16 32 26 / 28%),
+    inset 1px 1px 0 color-mix(in srgb, var(--color-sage-light) 30%, transparent),
+    inset 2px 8px 14px color-mix(in srgb, white 6%, transparent),
+    inset -1px -2px 4px color-mix(in srgb, black 30%, transparent),
+    inset 0 -4px 10px color-mix(in srgb, black 44%, transparent);
 }
 
 .person-card-face-female {
-  border-color: color-mix(in srgb, #e8b4b0 32%, transparent);
-  background: linear-gradient(165deg, #523c3a 0%, #423030 48%, #352626 100%);
+  border-color: color-mix(in srgb, #d06048 42%, transparent);
+  background: linear-gradient(168deg, #9a4534 0%, #7d3628 40%, #5f281e 74%, #4f2218 100%);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--color-rose) 28%, transparent),
-    0 3px 8px color-mix(in srgb, black 28%, transparent),
-    0 12px 28px color-mix(in srgb, #352626 55%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 16%, transparent),
-    inset 0 -4px 10px color-mix(in srgb, black 38%, transparent);
+    0 1px 2px rgb(0 0 0 / 34%),
+    0 6px 16px rgb(72 28 18 / 42%),
+    0 14px 30px rgb(72 28 18 / 28%),
+    inset 1px 1px 0 color-mix(in srgb, #f0b8a0 24%, transparent),
+    inset 2px 8px 14px color-mix(in srgb, white 5%, transparent),
+    inset -1px -2px 4px color-mix(in srgb, black 30%, transparent),
+    inset 0 -4px 10px color-mix(in srgb, black 42%, transparent);
 }
 
 .person-card-edge {
@@ -562,7 +648,12 @@ body {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  box-shadow: inset 0 -1px 0 color-mix(in srgb, black 30%, transparent);
+  z-index: 1;
+  box-shadow:
+    inset 1px 1px 1px color-mix(in srgb, white 20%, transparent),
+    inset -1px -1px 2px color-mix(in srgb, black 30%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 12%, transparent),
+    inset 0 -3px 7px color-mix(in srgb, black 40%, transparent);
 }
 
 .person-card-shine {
@@ -570,37 +661,57 @@ body {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
+  z-index: 1;
   background: linear-gradient(
-    125deg,
-    color-mix(in srgb, white 14%, transparent) 0%,
+    132deg,
+    color-mix(in srgb, white 20%, transparent) 0%,
+    color-mix(in srgb, white 7%, transparent) 16%,
     transparent 42%,
-    transparent 68%,
-    color-mix(in srgb, black 12%, transparent) 100%
+    transparent 66%,
+    color-mix(in srgb, black 14%, transparent) 100%
   );
   opacity: 1;
 }
 
 .person-card-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
 }
 
 .person-card-name {
   font-family: var(--font-sans);
-  font-size: 0.9rem;
+  font-size: 14px;
   font-weight: 800;
-  letter-spacing: 0.015em;
-  color: #faf8f4;
-  text-shadow: 0 1px 3px rgb(0 0 0 / 50%);
+  letter-spacing: normal;
+  color: var(--color-cream);
+  text-shadow:
+    -1px -1px 0 color-mix(in srgb, white 32%, transparent),
+    0 -1px 0 color-mix(in srgb, white 16%, transparent),
+    1px 1px 0 rgb(0 0 0 / 62%),
+    1px 2px 2px rgb(0 0 0 / 72%),
+    0 3px 5px rgb(0 0 0 / 42%);
   white-space: nowrap;
+  width: max-content;
+  max-width: 100%;
 }
 
 .person-card-meta {
   font-family: var(--font-sans);
-  font-size: 0.72rem;
+  font-size: 11px;
   font-weight: 500;
-  color: color-mix(in srgb, #faf8f4 82%, transparent);
-  text-shadow: 0 1px 2px rgb(0 0 0 / 35%);
+  color: color-mix(in srgb, var(--color-cream) 88%, var(--color-gold));
+  text-shadow:
+    -1px -1px 0 color-mix(in srgb, white 22%, transparent),
+    1px 1px 0 rgb(0 0 0 / 56%),
+    0 2px 3px rgb(0 0 0 / 46%);
+  width: max-content;
+  max-width: 100%;
+}
+
+.person-card-meta-reserved {
+  visibility: hidden;
+  user-select: none;
+  pointer-events: none;
 }
 
 .person-card-place {
@@ -608,19 +719,22 @@ body {
   font-size: 0.72rem;
   font-weight: 500;
   color: color-mix(in srgb, var(--color-gold) 75%, #faf8f4);
-  text-shadow: 0 1px 2px rgb(0 0 0 / 35%);
+  text-shadow:
+    -1px -1px 0 color-mix(in srgb, var(--color-gold) 32%, transparent),
+    1px 1px 0 rgb(0 0 0 / 48%),
+    0 2px 3px rgb(0 0 0 / 32%);
 }
 
 .person-card-content .avatar-ring {
   background: linear-gradient(
     145deg,
-    color-mix(in srgb, white 22%, transparent),
-    color-mix(in srgb, white 6%, transparent)
+    color-mix(in srgb, white 28%, transparent),
+    color-mix(in srgb, white 8%, transparent)
   );
-  border: 1px solid color-mix(in srgb, white 20%, transparent);
+  border: 1px solid color-mix(in srgb, white 24%, transparent);
   box-shadow:
-    inset 0 1px 2px color-mix(in srgb, white 25%, transparent),
-    inset 0 -2px 4px color-mix(in srgb, black 35%, transparent),
+    inset 1px 1px 2px color-mix(in srgb, white 32%, transparent),
+    inset -1px -2px 3px color-mix(in srgb, black 32%, transparent),
     0 3px 10px color-mix(in srgb, black 35%, transparent);
 }
 
@@ -628,24 +742,38 @@ body {
   border-color: color-mix(in srgb, var(--color-gold) 70%, transparent);
   box-shadow:
     0 0 0 2px color-mix(in srgb, var(--color-gold) 45%, transparent),
-    0 6px 16px color-mix(in srgb, var(--color-gold) 22%, transparent),
-    0 16px 36px color-mix(in srgb, black 35%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 22%, transparent),
-    inset 0 -2px 8px color-mix(in srgb, black 30%, transparent);
+    0 8px 20px color-mix(in srgb, var(--color-gold) 24%, transparent),
+    0 18px 38px rgb(0 0 0 / 30%),
+    inset 1px 1px 0 color-mix(in srgb, white 30%, transparent),
+    inset 2px 8px 14px color-mix(in srgb, white 8%, transparent),
+    inset -1px -2px 4px color-mix(in srgb, black 26%, transparent),
+    inset 0 -3px 8px color-mix(in srgb, black 34%, transparent);
+}
+
+.person-card-3d.selected .person-card-back {
+  box-shadow: 0 12px 26px color-mix(in srgb, var(--color-gold) 18%, transparent);
 }
 
 .person-card-3d.selected .person-card-name {
   color: #fffef9;
+  text-shadow:
+    -1px -1px 0 color-mix(in srgb, var(--color-gold) 42%, transparent),
+    0 -1px 0 color-mix(in srgb, white 18%, transparent),
+    1px 1px 0 rgb(0 0 0 / 62%),
+    1px 2px 2px rgb(0 0 0 / 72%),
+    0 3px 6px rgb(0 0 0 / 42%);
 }
 
 .person-card-3d.expanded-branch .person-card-face {
   border-color: color-mix(in srgb, var(--color-sage-light) 75%, transparent);
   box-shadow:
     0 0 0 2px color-mix(in srgb, var(--color-sage-light) 50%, transparent),
-    0 8px 20px color-mix(in srgb, var(--color-sage) 28%, transparent),
-    0 16px 36px color-mix(in srgb, black 35%, transparent),
-    inset 0 1px 0 color-mix(in srgb, white 22%, transparent),
-    inset 0 -2px 8px color-mix(in srgb, black 30%, transparent);
+    0 10px 22px color-mix(in srgb, var(--color-sage) 30%, transparent),
+    0 18px 38px rgb(0 0 0 / 30%),
+    inset 1px 1px 0 color-mix(in srgb, white 30%, transparent),
+    inset 2px 8px 14px color-mix(in srgb, white 8%, transparent),
+    inset -1px -2px 4px color-mix(in srgb, black 26%, transparent),
+    inset 0 -3px 8px color-mix(in srgb, black 34%, transparent);
 }
 
 .marriage-chain-link {
@@ -746,9 +874,16 @@ body {
 }
 
 .person-card-3d:active:not(.person-card-3d-compact) .person-card-face {
+  transform: translateZ(2px);
   box-shadow:
-    0 2px 6px color-mix(in srgb, black 35%, transparent),
-    inset 0 3px 8px color-mix(in srgb, black 45%, transparent);
+    0 1px 3px rgb(0 0 0 / 30%),
+    0 4px 10px rgb(0 0 0 / 22%),
+    inset 1px 1px 0 color-mix(in srgb, white 18%, transparent),
+    inset 0 3px 10px color-mix(in srgb, black 48%, transparent);
+}
+
+.person-card-3d:active:not(.person-card-3d-compact) .person-card-back {
+  transform: translateZ(-5px) translateY(1px);
 }
 
 .member-avatar-photo {

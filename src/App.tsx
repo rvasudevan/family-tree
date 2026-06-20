@@ -32,6 +32,7 @@ export default function App() {
     useFamilyData()
 
   const [focusId, setFocusId] = useState<string | null>(null)
+  const [omitParentsOnFocus, setOmitParentsOnFocus] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('tree')
   const [searchQuery, setSearchQuery] = useState('')
@@ -49,7 +50,8 @@ export default function App() {
   const focusMember = focusId ? graph.get(focusId) : undefined
   const selectedMember = graph.get(selectedId ?? undefined)
 
-  const handleFocus = (id: string) => {
+  const handleFocus = (id: string, options?: { omitParents?: boolean }) => {
+    setOmitParentsOnFocus(options?.omitParents ?? false)
     setFocusId(id)
     setSelectedId(id)
     localStorage.setItem(STORAGE_KEY, id)
@@ -140,6 +142,7 @@ export default function App() {
               <TreeView
                 graph={graph}
                 focusId={focusId}
+                omitParents={omitParentsOnFocus}
                 selectedId={selectedId}
                 onSelect={setSelectedId}
                 onFocus={handleFocus}

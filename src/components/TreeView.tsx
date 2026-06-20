@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import type { TreeNode } from '../types'
+import type { LayoutEdge, LayoutNode, TreeNode } from '../types'
+
+const BRANCH_HINT_PAD = 58
 import type { FamilyGraph } from '../utils/relationships'
 import { layoutTree } from '../utils/treeLayout'
 import { PersonCard } from './PersonCard'
@@ -7,9 +9,10 @@ import { PersonCard } from './PersonCard'
 interface TreeViewProps {
   graph: FamilyGraph
   focusId: string
+  omitParents?: boolean
   selectedId: string | null
   onSelect: (id: string) => void
-  onFocus: (id: string) => void
+  onFocus: (id: string, options?: { omitParents?: boolean }) => void
 }
 
 
@@ -21,7 +24,34 @@ const CHILD_REVEAL_STAGGER_MS = 2200
 const CHILD_REVEAL_ANIM_MS = 2200
 const VIEWPORT_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
 
-export function TreeView({ graph, focusId, selectedId, onSelect, onFocus }: TreeViewProps) {
+const KRISHNAMACHARI_ROOT_ID = 'kr'
+const KANAKAVALLI_ROOT_ID = 'ka'
+const KRISHNAMACHARI_COUPLE_IDS = new Set([KRISHNAMACHARI_ROOT_ID, KANAKAVALLI_ROOT_ID])
+
+interface FocusReturnContext {
+  focusId: string
+  expandedId: string | null
+  revealedChildCount: number
+}
+
+function krKaChildrenExpansion(
+  focusId: string,
+  graph: FamilyGraph,
+): { expandedId: string; revealedChildCount: number } | null {
+  if (!KRISHNAMACHARI_COUPLE_IDS.has(focusId)) return null
+  const member = graph.get(focusId)
+  if (!member || !graph.hasChildren(focusId)) return null
+  return { expandedId: focusId, revealedChildCount: graph.getChildren(member).length }
+}
+
+export function TreeView({
+  graph,
+  focusId,
+  omitParents = false,
+  selectedId,
+  onSelect,
+  onFocus,
+}: TreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
@@ -31,12 +61,51 @@ export function TreeView({ graph, focusId, selectedId, onSelect, onFocus }: Tree
   const [smoothViewport, setSmoothViewport] = useState(false)
   const dragRef = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null)
   const slotRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const preferAncestorFrameRef = useRef(false)
+  const pendingHintNavigationRef = useRef(false)
+  const pendingRestoreRef = useRef<FocusReturnContext | null>(null)
+  const returnContextRef = useRef<FocusReturnContext | null>(null)
 
   useEffect(() => {
+    if (pendingRestoreRef.current) {
+      const ctx = pendingRestoreRef.current
+      pendingRestoreRef.current = null
+      setSmoothViewport(true)
+
+      const krKaExpansion = krKaChildrenExpansion(ctx.focusId, graph)
+      if (krKaExpansion) {
+        setExpandedId(krKaExpansion.expandedId)
+        setRevealedChildCount(krKaExpansion.revealedChildCount)
+      } else if (ctx.expandedId && ctx.revealedChildCount > 0) {
+        setExpandedId(ctx.expandedId)
+        setRevealedChildCount(ctx.revealedChildCount)
+      } else {
+        setExpandedId(null)
+        setRevealedChildCount(0)
+      }
+      setEnteringChildId(null)
+      return
+    }
+
+    if (pendingHintNavigationRef.current) {
+      pendingHintNavigationRef.current = false
+      preferAncestorFrameRef.current = true
+      setSmoothViewport(true)
+
+      const member = graph.get(focusId)
+      if (member && graph.hasChildren(focusId)) {
+        setExpandedId(focusId)
+        setRevealedChildCount(graph.getChildren(member).length)
+        setEnteringChildId(null)
+        return
+      }
+    }
+
     setExpandedId(null)
     setRevealedChildCount(0)
     setEnteringChildId(null)
-  }, [focusId])
+    returnContextRef.current = null
+  }, [focusId, graph])
 
   useEffect(() => {
     if (!expandedId || revealedChildCount <= 0) return
@@ -64,8 +133,8 @@ export function TreeView({ graph, focusId, selectedId, onSelect, onFocus }: Tree
   }, [expandedId, revealedChildCount, graph])
 
   const tree = useMemo(
-    () => graph.buildExpandableTree(focusId, expandedId, revealedChildCount),
-    [graph, focusId, expandedId, revealedChildCount],
+    () => graph.buildExpandableTree(focusId, expandedId, revealedChildCount, !omitParents),
+    [graph, focusId, expandedId, revealedChildCount, omitParents],
   )
   const layout = useMemo(() => (tree ? layoutTree(tree) : null), [tree])
 
@@ -73,17 +142,31 @@ export function TreeView({ graph, focusId, selectedId, onSelect, onFocus }: Tree
     const container = containerRef.current
     if (!container || !layout) return
 
-    const padding = 32
-    const sx = (container.clientWidth - padding * 2) / layout.width
-    const sy = (container.clientHeight - padding * 2) / layout.height
+    const padding = 40
+    const useAncestorFrame = preferAncestorFrameRef.current
+    preferAncestorFrameRef.current = false
+
+    const ancestorFrame = useAncestorFrame
+      ? ancestorViewportFrame(layout.nodes, focusId, graph, expandedId !== null)
+      : null
+
+    const minX = ancestorFrame?.minX ?? 0
+    const minY = ancestorFrame?.minY ?? 0
+    const frameW = ancestorFrame ? ancestorFrame.maxX - ancestorFrame.minX : layout.width
+    const frameH = ancestorFrame
+      ? ancestorFrame.maxY - ancestorFrame.minY + BRANCH_HINT_PAD
+      : layout.height
+
+    const sx = (container.clientWidth - padding * 2) / frameW
+    const sy = (container.clientHeight - padding * 2) / frameH
     const nextScale = Math.min(Math.max(Math.min(sx, sy), 0.08), 1.2)
 
     setScale(nextScale)
     setOffset({
-      x: (container.clientWidth - layout.width * nextScale) / 2,
-      y: (container.clientHeight - layout.height * nextScale) / 2,
+      x: (container.clientWidth - frameW * nextScale) / 2 - minX * nextScale,
+      y: (container.clientHeight - frameH * nextScale) / 2 - minY * nextScale,
     })
-  }, [layout])
+  }, [layout, focusId, graph, expandedId])
 
   useEffect(() => {
     fitToView()
@@ -148,6 +231,45 @@ export function TreeView({ graph, focusId, selectedId, onSelect, onFocus }: Tree
     setSmoothViewport(true)
   }
 
+  const handleFocusFromHint = (id: string) => {
+    returnContextRef.current = {
+      focusId,
+      expandedId,
+      revealedChildCount,
+    }
+    pendingHintNavigationRef.current = true
+    onFocus(id, { omitParents: true })
+  }
+
+  const handleMoveUpGeneration = (memberId: string) => {
+    if (omitParents && returnContextRef.current) {
+      const ctx = returnContextRef.current
+      returnContextRef.current = null
+      pendingRestoreRef.current = ctx
+      preferAncestorFrameRef.current = false
+      setSmoothViewport(true)
+      onFocus(ctx.focusId, { omitParents: false })
+      return
+    }
+
+    const member = graph.get(memberId)
+    if (!member) return
+
+    const { father, mother } = graph.getParents(member)
+    const parentId = father?.id ?? mother?.id
+    if (!parentId) return
+
+    preferAncestorFrameRef.current = true
+    setSmoothViewport(true)
+    onFocus(parentId)
+  }
+
+  const handleExpandFromHint = (id: string) => {
+    preferAncestorFrameRef.current = true
+    setSmoothViewport(true)
+    handleCardClick(id)
+  }
+
   const hiddenNodeIds = useMemo(() => {
     const hidden = new Set<string>()
     if (!expandedId || revealedChildCount <= 0) return hidden
@@ -172,6 +294,11 @@ export function TreeView({ graph, focusId, selectedId, onSelect, onFocus }: Tree
     return ids
   }, [enteringChildId, graph])
 
+  const horizontalCoupleMeta = useMemo(
+    () => buildHorizontalCoupleMeta(layout?.nodes ?? [], layout?.edges ?? []),
+    [layout?.nodes, layout?.edges],
+  )
+
   const spouseMap = useMemo(
     () => buildSpouseMap(layout?.edges ?? []),
     [layout?.edges],
@@ -187,9 +314,15 @@ export function TreeView({ graph, focusId, selectedId, onSelect, onFocus }: Tree
     return parentRevealOrigin(expandedId, nodeMap, spouseMap)
   }, [expandedId, layout, nodeMap, spouseMap])
 
-  const descendantHints = useMemo(
-    () => (tree && layout ? collectDescendantHints(tree, nodeMap, graph) : []),
-    [tree, layout, nodeMap, graph],
+  const descendantHints = useMemo(() => {
+    if (!tree || !layout) return []
+    const rootCoupleCenterX = rootLevelCoupleCenterX(layout.nodes, focusId, spouseMap)
+    return collectDescendantHints(tree, nodeMap, graph, focusId, rootCoupleCenterX)
+  }, [tree, layout, nodeMap, graph, focusId, spouseMap])
+
+  const ancestorHints = useMemo(
+    () => (layout ? collectAncestorHints(layout.nodes, graph) : []),
+    [layout, graph],
   )
 
   useLayoutEffect(() => {
@@ -354,6 +487,8 @@ export function TreeView({ graph, focusId, selectedId, onSelect, onFocus }: Tree
           {layout.nodes.map((node) => {
             if (hiddenNodeIds.has(node.id)) return null
 
+            const hCouple = horizontalCoupleMeta.get(node.id)
+
             return (
             <div
               key={node.id}
@@ -363,13 +498,14 @@ export function TreeView({ graph, focusId, selectedId, onSelect, onFocus }: Tree
               }}
               className="person-card-slot absolute"
               data-deep={node.depth >= 2 ? 'true' : undefined}
+              data-hcouple={hCouple?.pairKey}
               style={{
                 left: node.x - node.cardW / 2,
                 top: node.y,
                 width: node.cardW,
                 height: node.cardH,
                 ['--card-h' as string]: `${node.cardH}px`,
-                zIndex: enteringIds.has(node.id) ? 200 : 80 - node.depth * 12 + (node.role === 'child' ? 6 : 0),
+                zIndex: stackZIndex(node, enteringIds, nodeMap, spouseMap),
               }}
             >
               <PersonCard
@@ -396,6 +532,18 @@ export function TreeView({ graph, focusId, selectedId, onSelect, onFocus }: Tree
             ...viewportStyle,
           }}
         >
+          {ancestorHints.map((hint) => (
+            <AncestorBranchHintInteractive
+              key={`up-${hint.id}`}
+              cx={hint.cx}
+              y={hint.y}
+              memberId={hint.id}
+              graph={graph}
+              omitParents={omitParents}
+              returnFocusId={returnContextRef.current?.focusId}
+              onMoveUp={handleMoveUpGeneration}
+            />
+          ))}
           {descendantHints.map((hint) => (
             <DescendantBranchHintInteractive
               key={`hint-${hint.id}`}
@@ -405,19 +553,44 @@ export function TreeView({ graph, focusId, selectedId, onSelect, onFocus }: Tree
               focusId={focusId}
               expandedId={expandedId}
               hasChildren={graph.hasChildren(hint.id)}
-              onFocus={onFocus}
-              onExpand={handleCardClick}
+              onFocus={handleFocusFromHint}
+              onExpand={handleExpandFromHint}
             />
           ))}
         </div>
       </div>
 
       <div className="glass shrink-0 border-t border-[color-mix(in_srgb,white_35%,transparent)] px-4 py-2.5 text-center text-xs text-[var(--color-bark-light)]">
-        Click someone to reveal their children · Click again to collapse · Double-click a card or branch
-        hint to re-center · Drag to pan
+        Click someone to reveal their children · Click again to collapse · Click bubble above to move
+        up · Click branch hint below to open that branch · Double-click a card to re-center · Drag to pan
       </div>
     </div>
   )
+}
+
+function buildHorizontalCoupleMeta(
+  nodes: LayoutNode[],
+  edges: LayoutEdge[],
+): Map<string, { pairKey: string; rowCenterY: number }> {
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]))
+  const meta = new Map<string, { pairKey: string; rowCenterY: number }>()
+
+  for (const edge of edges) {
+    if (edge.type !== 'marriage' || edge.marriageLayout !== 'horizontal') continue
+    const left = nodeMap.get(edge.from)
+    const right = nodeMap.get(edge.to)
+    if (!left || !right) continue
+
+    const rowTop = Math.min(left.y, right.y)
+    const rowHeight = Math.max(left.cardH, right.cardH)
+    const rowCenterY = rowTop + rowHeight / 2
+    const pairKey = [edge.from, edge.to].sort().join(':')
+
+    meta.set(edge.from, { pairKey, rowCenterY })
+    meta.set(edge.to, { pairKey, rowCenterY })
+  }
+
+  return meta
 }
 
 function buildSpouseMap(edges: { from: string; to: string; type: string }[]): Map<string, string> {
@@ -428,6 +601,30 @@ function buildSpouseMap(edges: { from: string; to: string; type: string }[]): Ma
     map.set(edge.to, edge.from)
   }
   return map
+}
+
+/** Keep vertically stacked spouses under their partner until hover lifts the card. */
+function stackZIndex(
+  node: { id: string; x: number; y: number; depth: number; role: string },
+  enteringIds: Set<string>,
+  nodeMap: Map<string, { x: number; y: number }>,
+  spouseMap: Map<string, string>,
+): number {
+  if (enteringIds.has(node.id)) return 200
+
+  let z = 80 - node.depth * 12 + (node.role === 'child' ? 6 : 0)
+
+  if (node.role === 'parent') z += 12
+
+  if (node.role === 'spouse') {
+    const partnerId = spouseMap.get(node.id)
+    const partner = partnerId ? nodeMap.get(partnerId) : undefined
+    if (partner && Math.abs(partner.x - node.x) < 4 && node.y > partner.y) {
+      z -= 8
+    }
+  }
+
+  return z
 }
 
 type LayoutPoint = { x: number; y: number; cardW: number; cardH: number }
@@ -588,23 +785,79 @@ function MarriageChainLink({
   )
 }
 
+interface AncestorHint {
+  id: string
+  cx: number
+  y: number
+}
+
+const ANCESTOR_HINT_HEIGHT = 32
+
+function collectAncestorHints(nodes: LayoutNode[], graph: FamilyGraph): AncestorHint[] {
+  const hints: AncestorHint[] = []
+
+  for (const node of nodes) {
+    if (node.id === KRISHNAMACHARI_ROOT_ID) continue
+
+    const member = graph.get(node.id)
+    if (!member) continue
+
+    const { father, mother } = graph.getParents(member)
+    if (!father && !mother) continue
+
+    hints.push({
+      id: node.id,
+      cx: node.x,
+      y: node.y - ANCESTOR_HINT_HEIGHT - 8,
+    })
+  }
+
+  return hints
+}
+
 interface DescendantHint {
   id: string
   cx: number
   y: number
 }
 
+function rootLevelCoupleCenterX(
+  nodes: LayoutNode[],
+  focusId: string,
+  _spouseMap: Map<string, string>,
+): number | null {
+  if (!KRISHNAMACHARI_COUPLE_IDS.has(focusId)) return null
+
+  const kr = nodes.find((n) => n.id === KRISHNAMACHARI_ROOT_ID)
+  const ka = nodes.find((n) => n.id === KANAKAVALLI_ROOT_ID)
+  if (kr && ka) return (kr.x + ka.x) / 2
+
+  const focus = nodes.find((n) => n.id === focusId)
+  return focus?.x ?? null
+}
+
 function collectDescendantHints(
   node: TreeNode,
   nodeMap: Map<string, { x: number; y: number; cardH: number }>,
   graph: FamilyGraph,
+  focusId: string,
+  rootCoupleCenterX: number | null,
 ): DescendantHint[] {
   const hints: DescendantHint[] = []
+  const atKrKaRoot = rootCoupleCenterX !== null
 
   const walk = (treeNode: TreeNode) => {
     if (graph.hasChildren(treeNode.member.id) && treeNode.children.length === 0) {
       const column = columnBottom(treeNode, nodeMap)
-      if (column) hints.push({ id: treeNode.member.id, ...column })
+      if (!column) return
+
+      const centerOnParents = atKrKaRoot && treeNode.member.id === focusId
+
+      hints.push({
+        id: treeNode.member.id,
+        cx: centerOnParents ? rootCoupleCenterX! : column.cx,
+        y: column.y,
+      })
     }
     treeNode.children.forEach(walk)
   }
@@ -627,6 +880,120 @@ function columnBottom(
   }
 
   return { cx: memberLayout.x, y: bottom + 10 }
+}
+
+/** Frame parents + focus couple (and expanded descendants) for branch-hint navigation */
+function ancestorViewportFrame(
+  nodes: LayoutNode[],
+  focusId: string,
+  graph: FamilyGraph,
+  includeExpanded: boolean,
+): { minX: number; maxX: number; minY: number; maxY: number } | null {
+  const focusMember = graph.get(focusId)
+  if (!focusMember) return null
+
+  const spouse = graph.getSpouse(focusMember)
+  const focusIds = new Set([focusId, spouse?.id].filter((id): id is string => Boolean(id)))
+
+  let selected = nodes.filter((n) => n.role === 'parent' || focusIds.has(n.id))
+  if (selected.length === 0) return null
+
+  if (includeExpanded) {
+    const focusRowY = Math.min(...selected.filter((n) => focusIds.has(n.id)).map((n) => n.y))
+    const below = nodes.filter(
+      (n) => n.y > focusRowY && !focusIds.has(n.id) && n.role !== 'parent',
+    )
+    selected = [...selected, ...below]
+  }
+
+  return {
+    minX: Math.min(...selected.map((n) => n.x - n.cardW / 2)),
+    maxX: Math.max(...selected.map((n) => n.x + n.cardW / 2)),
+    minY: Math.min(...selected.map((n) => n.y)),
+    maxY: Math.max(...selected.map((n) => n.y + n.cardH)),
+  }
+}
+
+/** Single bubble above a card — click to move up one generation */
+function AncestorBranchHintInteractive({
+  cx,
+  y,
+  memberId,
+  graph,
+  omitParents,
+  returnFocusId,
+  onMoveUp,
+}: {
+  cx: number
+  y: number
+  memberId: string
+  graph: FamilyGraph
+  omitParents?: boolean
+  returnFocusId?: string
+  onMoveUp: (memberId: string) => void
+}) {
+  const width = 28
+  const height = ANCESTOR_HINT_HEIGHT
+  const center = width / 2
+  const nodeY = 8
+  const stemStart = 12
+
+  const stopDrag = (e: React.PointerEvent) => {
+    e.stopPropagation()
+  }
+
+  const member = graph.get(memberId)
+  const { father, mother } = member ? graph.getParents(member) : {}
+  const returnMember = returnFocusId ? graph.get(returnFocusId) : undefined
+  const label =
+    omitParents && returnMember
+      ? KRISHNAMACHARI_COUPLE_IDS.has(returnFocusId!)
+        ? 'Return to Krishnamachari and Kanakavalli with children'
+        : `Return to ${returnMember.firstName}`
+      : father && mother
+        ? `Move up to ${father.firstName} and ${mother.firstName}`
+        : father || mother
+          ? `Move up to ${(father ?? mother)!.firstName}`
+          : 'Move up one generation'
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+    onMoveUp(memberId)
+  }
+
+  return (
+    <button
+      type="button"
+      className="ancestor-branch-hint-interactive absolute"
+      style={{ left: cx - center, top: y, width, height }}
+      onPointerDown={stopDrag}
+      onClick={handleClick}
+      aria-label={label}
+    >
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        className="ancestor-branch-hint-svg pointer-events-none"
+        aria-hidden="true"
+      >
+        <circle
+          className="descendant-branch-node descendant-branch-node-center"
+          cx={center}
+          cy={nodeY}
+          r={4.2}
+        />
+        <line
+          className="descendant-branch-stem"
+          x1={center}
+          y1={stemStart}
+          x2={center}
+          y2={height}
+        />
+      </svg>
+    </button>
+  )
 }
 
 /** Small branching motif below siblings who have hidden descendants */
@@ -667,7 +1034,7 @@ function DescendantBranchHintInteractive({
     onFocus(memberId)
   }
 
-  const handleDoubleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
     activate()
@@ -686,7 +1053,7 @@ function DescendantBranchHintInteractive({
       className="descendant-branch-hint-interactive absolute"
       style={{ left: cx - center, top: y, width, height }}
       onPointerDown={stopDrag}
-      onDoubleClick={handleDoubleClick}
+      onClick={handleClick}
       aria-label={label}
     >
       <svg

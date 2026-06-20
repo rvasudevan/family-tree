@@ -32,14 +32,37 @@ async function saveMembers(members) {
 }
 
 function requestPath(event) {
+  const candidates = []
+
   if (event.rawUrl) {
     try {
-      return new URL(event.rawUrl).pathname
+      candidates.push(new URL(event.rawUrl).pathname)
     } catch {
       // fall through
     }
   }
-  return event.path
+
+  if (event.rawPath) candidates.push(event.rawPath)
+  if (event.path) candidates.push(event.path)
+
+  const forwarded =
+    event.headers?.['x-nf-request-url'] ||
+    event.headers?.['X-Nf-Request-Url'] ||
+    event.headers?.['x-forwarded-uri'] ||
+    event.headers?.['X-Forwarded-Uri']
+  if (forwarded) {
+    try {
+      candidates.push(new URL(forwarded).pathname)
+    } catch {
+      candidates.push(forwarded)
+    }
+  }
+
+  for (const path of candidates) {
+    if (path && path.startsWith('/api/')) return path
+  }
+
+  return event.path || '/'
 }
 
 function verifyAdmin(event) {
