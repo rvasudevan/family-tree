@@ -2,6 +2,8 @@
 
 An intuitive family tree viewer built from your existing family data export.
 
+**Live site:** [krishnamachari.netlify.app](https://krishnamachari.netlify.app)
+
 ## Quick start
 
 ```bash
@@ -71,11 +73,7 @@ The app is configured for Netlify: static frontend in `dist/` and API routes as 
 4. Under **Site configuration → Environment variables**, add:
    - `ADMIN_PASSWORD` — your admin login password
    - `JWT_SECRET` — a long random string
-5. Deploy. Netlify will assign a URL like `https://your-site.netlify.app`.
-
-### Custom domain (leamonde.net)
-
-In Netlify: **Domain management → Add domain** → enter `leamonde.net` and follow the DNS instructions at your registrar.
+5. Deploy. The production site is at [krishnamachari.netlify.app](https://krishnamachari.netlify.app).
 
 ### Local Netlify dev
 
@@ -103,9 +101,7 @@ npm run build
 npm start
 ```
 
-`npm start` serves the API and static files from one Node process. Use this if you host on a VPS instead of Netlify.
-
-Point **leamonde.net** at the server running on port 3001 (or put nginx/Caddy in front). Use a persistent volume or backup for `server/data/family.json` so edits survive redeploys.
+`npm start` serves the API and static files from one Node process. Use this if you host on a VPS instead of Netlify. Put nginx/Caddy in front and use a persistent volume or backup for `server/data/family.json` so edits survive redeploys.
 
 ## Notes
 

@@ -14,6 +14,8 @@ const corsHeaders = {
 }
 
 const { mergeSeedDefaults } = require('./seedMerge')
+
+async function loadMembers() {
   try {
     const store = getStore({ name: 'family-tree', consistency: 'strong' })
     const data = await store.get(BLOB_KEY, { type: 'json' })
