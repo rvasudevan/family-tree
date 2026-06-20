@@ -34,17 +34,20 @@ async function getMembersFromFile(): Promise<FamilyMember[]> {
   if (!Array.isArray(parsed)) {
     throw new Error('Family data file is invalid')
   }
-  return mergeSeedAvatars(parsed as FamilyMember[])
+  return mergeSeedDefaults(parsed as FamilyMember[])
 }
 
-function mergeSeedAvatars(members: FamilyMember[]): FamilyMember[] {
+function mergeSeedDefaults(members: FamilyMember[]): FamilyMember[] {
   const seedById = new Map(SEED_MEMBERS.map((m) => [m.id, m]))
   return members.map((member) => {
     const seed = seedById.get(member.id)
-    if (seed?.avatarUrl && !member.avatarUrl) {
-      return { ...member, avatarUrl: seed.avatarUrl }
-    }
-    return member
+    if (!seed) return member
+
+    const patch: Partial<FamilyMember> = {}
+    if (seed.avatarUrl && !member.avatarUrl) patch.avatarUrl = seed.avatarUrl
+    if (seed.deathYear && !member.deathYear) patch.deathYear = seed.deathYear
+
+    return Object.keys(patch).length ? { ...member, ...patch } : member
   })
 }
 
@@ -58,7 +61,7 @@ async function getMembersFromBlob(): Promise<FamilyMember[]> {
     const { getStore } = await import('@netlify/blobs')
     const store = getStore({ name: 'family-tree', consistency: 'strong' })
     const data = await store.get(BLOB_KEY, { type: 'json' })
-    if (data) return mergeSeedAvatars(data as FamilyMember[])
+    if (data) return mergeSeedDefaults(data as FamilyMember[])
     const seed = await readSeed()
     await store.setJSON(BLOB_KEY, seed)
     return seed
