@@ -1,23 +1,64 @@
+import importBaselineData from './importBaseline.json' with { type: 'json' }
 import type { FamilyMember } from '../src/types'
 
-/** Original CSV import placeholders superseded in seed. */
-const STALE_BIRTH_PLACES: Record<string, string[]> = {
-  kr: ['Vedanthangal, India'],
-  ka: ['Vedanthangal, India'],
-}
+const IMPORT_BASELINE = importBaselineData as FamilyMember[]
+
+const MANAGED_FIELDS = [
+  'firstName',
+  'lastName',
+  'gender',
+  'birthYear',
+  'deathYear',
+  'birthPlace',
+  'anniversary',
+  'profession',
+  'bio',
+  'avatarUrl',
+  'generation',
+  'spouseId',
+  'fatherId',
+  'motherId',
+] as const satisfies readonly (keyof FamilyMember)[]
+
+type ManagedField = (typeof MANAGED_FIELDS)[number]
 
 function isMissing(value: unknown): boolean {
   return value == null || (typeof value === 'string' && !value.trim())
 }
 
-function shouldFillFromSeed(
-  memberValue: string | undefined,
-  seedValue: string | undefined,
-  staleValues?: string[],
-): boolean {
-  if (!seedValue?.trim()) return false
-  if (isMissing(memberValue)) return true
-  return staleValues?.includes(memberValue.trim()) ?? false
+function valuesEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true
+  if (isMissing(a) && isMissing(b)) return true
+  return false
+}
+
+function reconcileMember(
+  member: FamilyMember,
+  seed: FamilyMember,
+  baseline?: FamilyMember,
+): FamilyMember {
+  const patch: Partial<FamilyMember> = {}
+
+  for (const field of MANAGED_FIELDS) {
+    const seedValue = seed[field]
+    const memberValue = member[field]
+    const baselineValue = baseline?.[field]
+
+    if (isMissing(seedValue)) continue
+    if (valuesEqual(seedValue, memberValue)) continue
+
+    if (isMissing(memberValue)) {
+      patch[field] = seedValue as FamilyMember[ManagedField]
+      continue
+    }
+
+    // Stored data still matches the original CSV import — apply git seed correction.
+    if (baseline && valuesEqual(memberValue, baselineValue)) {
+      patch[field] = seedValue as FamilyMember[ManagedField]
+    }
+  }
+
+  return Object.keys(patch).length ? { ...member, ...patch, id: member.id } : member
 }
 
 export function mergeSeedDefaults(
@@ -25,19 +66,11 @@ export function mergeSeedDefaults(
   seedMembers: FamilyMember[],
 ): FamilyMember[] {
   const seedById = new Map(seedMembers.map((m) => [m.id, m]))
+  const baselineById = new Map(IMPORT_BASELINE.map((m) => [m.id, m]))
+
   return members.map((member) => {
     const seed = seedById.get(member.id)
     if (!seed) return member
-
-    const patch: Partial<FamilyMember> = {}
-    if (seed.avatarUrl && !member.avatarUrl) patch.avatarUrl = seed.avatarUrl
-    if (seed.deathYear && !member.deathYear) patch.deathYear = seed.deathYear
-    if (
-      shouldFillFromSeed(member.birthPlace, seed.birthPlace, STALE_BIRTH_PLACES[member.id])
-    ) {
-      patch.birthPlace = seed.birthPlace
-    }
-
-    return Object.keys(patch).length ? { ...member, ...patch } : member
+    return reconcileMember(member, seed, baselineById.get(member.id))
   })
 }
