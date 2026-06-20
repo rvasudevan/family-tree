@@ -13,25 +13,11 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
 }
 
-function mergeSeedDefaults(members) {
-  const seedById = new Map(seed.map((m) => [m.id, m]))
-  return members.map((member) => {
-    const seedMember = seedById.get(member.id)
-    if (!seedMember) return member
-
-    const patch = {}
-    if (seedMember.avatarUrl && !member.avatarUrl) patch.avatarUrl = seedMember.avatarUrl
-    if (seedMember.deathYear && !member.deathYear) patch.deathYear = seedMember.deathYear
-
-    return Object.keys(patch).length ? { ...member, ...patch } : member
-  })
-}
-
-async function loadMembers() {
+const { mergeSeedDefaults } = require('./seedMerge')
   try {
     const store = getStore({ name: 'family-tree', consistency: 'strong' })
     const data = await store.get(BLOB_KEY, { type: 'json' })
-    if (data) return mergeSeedDefaults(data)
+    if (data) return mergeSeedDefaults(data, seed)
     await store.setJSON(BLOB_KEY, seed)
     return seed
   } catch (err) {

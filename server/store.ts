@@ -2,6 +2,7 @@ import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import seedData from './seed/family.json' with { type: 'json' }
+import { mergeSeedDefaults } from './seedMerge.ts'
 import type { FamilyMember } from '../src/types'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -34,21 +35,7 @@ async function getMembersFromFile(): Promise<FamilyMember[]> {
   if (!Array.isArray(parsed)) {
     throw new Error('Family data file is invalid')
   }
-  return mergeSeedDefaults(parsed as FamilyMember[])
-}
-
-function mergeSeedDefaults(members: FamilyMember[]): FamilyMember[] {
-  const seedById = new Map(SEED_MEMBERS.map((m) => [m.id, m]))
-  return members.map((member) => {
-    const seed = seedById.get(member.id)
-    if (!seed) return member
-
-    const patch: Partial<FamilyMember> = {}
-    if (seed.avatarUrl && !member.avatarUrl) patch.avatarUrl = seed.avatarUrl
-    if (seed.deathYear && !member.deathYear) patch.deathYear = seed.deathYear
-
-    return Object.keys(patch).length ? { ...member, ...patch } : member
-  })
+  return mergeSeedDefaults(parsed as FamilyMember[], SEED_MEMBERS)
 }
 
 async function setMembersToFile(members: FamilyMember[]): Promise<void> {
@@ -61,7 +48,7 @@ async function getMembersFromBlob(): Promise<FamilyMember[]> {
     const { getStore } = await import('@netlify/blobs')
     const store = getStore({ name: 'family-tree', consistency: 'strong' })
     const data = await store.get(BLOB_KEY, { type: 'json' })
-    if (data) return mergeSeedDefaults(data as FamilyMember[])
+    if (data) return mergeSeedDefaults(data as FamilyMember[], SEED_MEMBERS)
     const seed = await readSeed()
     await store.setJSON(BLOB_KEY, seed)
     return seed

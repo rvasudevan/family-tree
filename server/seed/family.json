@@ -5,25 +5,25 @@
     "lastName": "",
     "gender": "male",
     "birthYear": "25 Apr 1898",
-    "deathYear": "1969",
-    "birthPlace": "Vedanthangal, India",
+    "birthPlace": "Puliyampettai, Madras Presidency, India",
     "spouseId": "ka",
-    "generation": 1
+    "generation": 1,
+    "deathYear": "1969"
   },
   {
     "id": "ka",
-    "firstName": "Kannakavalli",
+    "firstName": "Kanakavalli",
     "lastName": "",
     "gender": "female",
     "birthYear": "15 Apr to 13 May 1906",
-    "birthPlace": "Vedanthangal, India",
+    "birthPlace": "Triplicane,Madras, India",
     "spouseId": "kr",
     "generation": 1
   },
   {
     "id": "ve",
-    "firstName": "K.Vedam",
-    "lastName": "",
+    "firstName": "Vedam",
+    "lastName": "(Vedu)",
     "gender": "female",
     "birthYear": "23 Oct 1923",
     "birthPlace": "Madras, India",
@@ -72,7 +72,8 @@
     "spouseId": "rw",
     "fatherId": "kr",
     "motherId": "ka",
-    "generation": 2
+    "generation": 2,
+    "deathYear": "Nov 20 2024"
   },
   {
     "id": "rw",
@@ -80,7 +81,10 @@
     "lastName": "",
     "gender": "male",
     "spouseId": "sh",
-    "generation": 2
+    "generation": 2,
+    "birthYear": "Feb 9 1921",
+    "deathYear": "Oct 30 1971",
+    "birthPlace": "Rajendram, Madras Presidency, India"
   },
   {
     "id": "ja",
@@ -216,8 +220,8 @@
   {
     "id": "vs",
     "firstName": "Vasanta",
-    "lastName": "Rajagopalan",
-    "gender": "male",
+    "lastName": "",
+    "gender": "female",
     "birthYear": "9 Oct",
     "spouseId": "rg",
     "fatherId": "su",
@@ -259,8 +263,8 @@
   },
   {
     "id": "sd",
-    "firstName": "Sadagopan",
-    "lastName": "Srinivasan",
+    "firstName": "Srinivasan",
+    "lastName": "",
     "gender": "male",
     "birthYear": "26 Oct",
     "spouseId": "rv2",
@@ -766,7 +770,7 @@
   {
     "id": "sr",
     "firstName": "Sriram",
-    "lastName": "Srinivasan",
+    "lastName": "",
     "gender": "male",
     "birthYear": "26 Feb",
     "spouseId": "at",
