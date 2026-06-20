@@ -8,18 +8,18 @@ interface MemberListProps {
   members: FamilyMember[]
   graph: FamilyGraph
   query: string
-  selectedId: string | null
-  onSelect: (id: string) => void
+  isAdmin?: boolean
   onFocus: (id: string) => void
+  onAdminEdit?: (id: string) => void
 }
 
 export function MemberList({
   members,
   graph,
   query,
-  selectedId,
-  onSelect,
+  isAdmin = false,
   onFocus,
+  onAdminEdit,
 }: MemberListProps) {
   const filtered = useMemo(() => {
     if (query.trim()) return searchMembers(members, query)
@@ -30,11 +30,6 @@ export function MemberList({
       return displayName(a).localeCompare(displayName(b), undefined, { sensitivity: 'base' })
     })
   }, [members, query])
-
-  const connected = useMemo(
-    () => (selectedId ? graph.getConnectedMembers(selectedId) : new Set<string>()),
-    [graph, selectedId],
-  )
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
@@ -56,18 +51,14 @@ export function MemberList({
               <PersonCard
                 member={member}
                 graph={graph}
-                selected={selectedId === member.id}
-                onClick={() => onSelect(member.id)}
-                onDoubleClick={() => onFocus(member.id)}
+                onDoubleClick={() => {
+                  if (isAdmin && onAdminEdit) onAdminEdit(member.id)
+                  else onFocus(member.id)
+                }}
               />
               {!hasLinks && (
                 <span className="absolute right-2 top-2 rounded-full bg-[color-mix(in_srgb,var(--color-gold)_20%,white)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-bark-light)]">
                   unlinked
-                </span>
-              )}
-              {selectedId && connected.has(member.id) && member.id !== selectedId && (
-                <span className="absolute left-2 top-2 rounded-full bg-[color-mix(in_srgb,var(--color-sage)_20%,white)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-sage)]">
-                  related
                 </span>
               )}
             </div>
@@ -83,7 +74,9 @@ export function MemberList({
 
       {filtered.length > 0 && (
         <p className="mt-8 text-center text-xs text-[var(--color-bark-light)]">
-          Tip: double-click any card to jump to their tree view
+          {isAdmin
+            ? 'Tip: double-click any card to open the details panel'
+            : 'Tip: double-click any card to jump to their tree view'}
         </p>
       )}
     </div>

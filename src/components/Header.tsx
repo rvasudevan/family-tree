@@ -29,7 +29,7 @@ export function Header({
         <h1 className="font-serif text-2xl font-semibold tracking-tight">
           Family Tree
           {isAdmin && (
-            <span className="ml-2 rounded-full bg-gradient-to-r from-[var(--color-gold)] to-[#e0c078] px-2.5 py-0.5 text-xs font-sans font-semibold text-[var(--color-bark)] shadow-sm">
+            <span className="ml-2 rounded-full bg-gradient-to-r from-[var(--color-gold)] to-[#c4b49a] px-2.5 py-0.5 text-xs font-sans font-semibold text-[var(--color-bark)] shadow-sm">
               Admin
             </span>
           )}

@@ -1,4 +1,8 @@
+import seedMembers from '../data/family.json'
 import type { FamilyMember } from '../types'
+import { mergeSeedDefaults } from '../utils/seedMerge'
+
+const SEED = seedMembers as FamilyMember[]
 
 const API_BASE = import.meta.env.VITE_API_URL ?? ''
 const ADMIN_TOKEN_KEY = 'family-tree-admin-token'
@@ -19,11 +23,16 @@ export function isAdminSession(): boolean {
   return Boolean(getAdminToken())
 }
 
+function withSeedDefaults(members: FamilyMember[]): FamilyMember[] {
+  return mergeSeedDefaults(members, SEED)
+}
+
 export async function fetchMembers(): Promise<FamilyMember[]> {
   try {
     const res = await fetch(`${API_BASE}/api/members`)
     if (res.ok) {
-      return res.json() as Promise<FamilyMember[]>
+      const members = (await res.json()) as FamilyMember[]
+      return withSeedDefaults(members)
     }
   } catch {
     // try static fallback below
@@ -33,7 +42,8 @@ export async function fetchMembers(): Promise<FamilyMember[]> {
   if (!fallback.ok) {
     throw new Error('Could not load family data')
   }
-  return fallback.json() as Promise<FamilyMember[]>
+  const members = (await fallback.json()) as FamilyMember[]
+  return withSeedDefaults(members)
 }
 
 export async function saveMembers(members: FamilyMember[]): Promise<void> {

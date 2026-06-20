@@ -33,7 +33,7 @@ export default function App() {
 
   const [focusId, setFocusId] = useState<string | null>(null)
   const [omitParentsOnFocus, setOmitParentsOnFocus] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [adminEditId, setAdminEditId] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('tree')
   const [searchQuery, setSearchQuery] = useState('')
   const [showLogin, setShowLogin] = useState(false)
@@ -43,17 +43,15 @@ export default function App() {
     if (members.length > 0 && focusId == null) {
       const id = loadInitialFocus(members, graph)
       setFocusId(id)
-      setSelectedId(id)
     }
   }, [members, graph, focusId])
 
   const focusMember = focusId ? graph.get(focusId) : undefined
-  const selectedMember = graph.get(selectedId ?? undefined)
+  const adminEditMember = adminEditId ? graph.get(adminEditId) : undefined
 
   const handleFocus = (id: string, options?: { omitParents?: boolean }) => {
     setOmitParentsOnFocus(options?.omitParents ?? false)
     setFocusId(id)
-    setSelectedId(id)
     localStorage.setItem(STORAGE_KEY, id)
     if (viewMode === 'list') setViewMode('tree')
   }
@@ -66,6 +64,7 @@ export default function App() {
   const handleLogout = () => {
     logoutAdmin()
     setIsAdmin(false)
+    setAdminEditId(null)
   }
 
   if (loading && members.length === 0) {
@@ -143,34 +142,39 @@ export default function App() {
                 graph={graph}
                 focusId={focusId}
                 omitParents={omitParentsOnFocus}
-                selectedId={selectedId}
-                onSelect={setSelectedId}
+                isAdmin={isAdmin}
                 onFocus={handleFocus}
+                onAdminEdit={setAdminEditId}
               />
             ) : (
               <MemberList
                 members={members}
                 graph={graph}
                 query={searchQuery}
-                selectedId={selectedId}
-                onSelect={setSelectedId}
+                isAdmin={isAdmin}
                 onFocus={handleFocus}
+                onAdminEdit={setAdminEditId}
               />
             )}
           </main>
 
-          {selectedMember && (
+          {adminEditMember && isAdmin && (
             <PersonDetail
-              member={selectedMember}
+              key={adminEditMember.id}
+              member={adminEditMember}
               members={members}
               graph={graph}
-              isAdmin={isAdmin}
-              onClose={() => setSelectedId(null)}
-              onNavigate={handleFocus}
+              isAdmin
+              docked
+              onClose={() => setAdminEditId(null)}
+              onNavigate={(id) => {
+                handleFocus(id)
+                setAdminEditId(id)
+              }}
               onSaveMember={saveMember}
               onDelete={(id) => {
                 void remove(id)
-                if (selectedId === id) setSelectedId(null)
+                setAdminEditId(null)
                 if (focusId === id) {
                   const fallback = members.find((m) => m.id !== id)
                   if (fallback) handleFocus(fallback.id)

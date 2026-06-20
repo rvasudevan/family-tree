@@ -18,6 +18,7 @@ const MANAGED_FIELDS = [
   'spouseId',
   'fatherId',
   'motherId',
+  'siblingOrder',
 ] as const satisfies readonly (keyof FamilyMember)[]
 
 type ManagedField = (typeof MANAGED_FIELDS)[number]

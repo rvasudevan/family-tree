@@ -78,7 +78,7 @@ function verifyAdmin(event) {
   }
 }
 
-exports.handler = async (event) => {
+const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: corsHeaders, body: '' }
   }
@@ -142,3 +142,5 @@ exports.handler = async (event) => {
     }
   }
 }
+
+module.exports = { handler }

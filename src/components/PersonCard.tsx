@@ -31,6 +31,7 @@ export function PersonCard({
   onDoubleClick,
 }: PersonCardProps) {
   const ref = useRef<HTMLButtonElement>(null)
+  const clickTimerRef = useRef<number | null>(null)
   const [tilt, setTilt] = useState({ x: 0, y: 0 })
   const [lifted, setLifted] = useState(false)
   const [hovering, setHovering] = useState(false)
@@ -43,6 +44,32 @@ export function PersonCard({
     mq.addEventListener('change', onChange)
     return () => mq.removeEventListener('change', onChange)
   }, [])
+
+  useEffect(() => {
+    return () => {
+      if (clickTimerRef.current) window.clearTimeout(clickTimerRef.current)
+    }
+  }, [])
+
+  const handleClick = () => {
+    if (!onClick) return
+    if (!onDoubleClick) {
+      onClick()
+      return
+    }
+    clickTimerRef.current = window.setTimeout(() => {
+      clickTimerRef.current = null
+      onClick()
+    }, 280)
+  }
+
+  const handleDoubleClick = () => {
+    if (clickTimerRef.current) {
+      window.clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = null
+    }
+    onDoubleClick?.()
+  }
 
   const birthLine = cardBirthLine(member)
   const deathLine = cardDeathLine(member)
@@ -90,8 +117,8 @@ export function PersonCard({
     <button
       ref={ref}
       type="button"
-      onClick={onClick}
-      onDoubleClick={onDoubleClick}
+      onClick={onClick ? handleClick : undefined}
+      onDoubleClick={onDoubleClick ? handleDoubleClick : undefined}
       onPointerMove={onPointerMove}
       onPointerEnter={() => {
         setLifted(true)

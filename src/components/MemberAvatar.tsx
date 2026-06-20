@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { FamilyMember } from '../types'
 import { avatarEmoji } from '../utils/family'
 
@@ -17,13 +18,16 @@ const sizeClasses: Record<AvatarSize, string> = {
 
 export function MemberAvatar({ member, size = 'md', className = '' }: MemberAvatarProps) {
   const sizeClass = sizeClasses[size]
+  const [photoFailed, setPhotoFailed] = useState(false)
+  const photoUrl = member.avatarUrl
 
-  if (member.avatarUrl?.startsWith('/') || member.avatarUrl?.startsWith('http')) {
+  if ((photoUrl?.startsWith('/') || photoUrl?.startsWith('http')) && !photoFailed) {
     return (
       <img
-        src={member.avatarUrl}
+        src={photoUrl}
         alt=""
         className={`member-avatar-photo ${sizeClass} ${className}`}
+        onError={() => setPhotoFailed(true)}
       />
     )
   }

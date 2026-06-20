@@ -1,4 +1,7 @@
-const importBaseline = require('./importBaseline.json')
+import importBaselineData from '../data/importBaseline.json'
+import type { FamilyMember } from '../types'
+
+const IMPORT_BASELINE = importBaselineData as FamilyMember[]
 
 const MANAGED_FIELDS = [
   'firstName',
@@ -16,20 +19,24 @@ const MANAGED_FIELDS = [
   'fatherId',
   'motherId',
   'siblingOrder',
-]
+] as const satisfies readonly (keyof FamilyMember)[]
 
-function isMissing(value) {
+function isMissing(value: unknown): boolean {
   return value == null || (typeof value === 'string' && !value.trim())
 }
 
-function valuesEqual(a, b) {
+function valuesEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true
   if (isMissing(a) && isMissing(b)) return true
   return false
 }
 
-function reconcileMember(member, seed, baseline) {
-  const patch = {}
+function reconcileMember(
+  member: FamilyMember,
+  seed: FamilyMember,
+  baseline?: FamilyMember,
+): FamilyMember {
+  const patch: Record<string, unknown> = {}
 
   for (const field of MANAGED_FIELDS) {
     const seedValue = seed[field]
@@ -49,12 +56,15 @@ function reconcileMember(member, seed, baseline) {
     }
   }
 
-  return Object.keys(patch).length ? { ...member, ...patch, id: member.id } : member
+  return Object.keys(patch).length ? ({ ...member, ...patch, id: member.id } as FamilyMember) : member
 }
 
-function mergeSeedDefaults(members, seedMembers) {
+export function mergeSeedDefaults(
+  members: FamilyMember[],
+  seedMembers: FamilyMember[],
+): FamilyMember[] {
   const seedById = new Map(seedMembers.map((m) => [m.id, m]))
-  const baselineById = new Map(importBaseline.map((m) => [m.id, m]))
+  const baselineById = new Map(IMPORT_BASELINE.map((m) => [m.id, m]))
 
   return members.map((member) => {
     const seed = seedById.get(member.id)
@@ -62,5 +72,3 @@ function mergeSeedDefaults(members, seedMembers) {
     return reconcileMember(member, seed, baselineById.get(member.id))
   })
 }
-
-module.exports = { mergeSeedDefaults }

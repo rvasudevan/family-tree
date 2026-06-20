@@ -3,14 +3,18 @@
 @theme {
   --font-serif: "Cormorant Garamond", "Iowan Old Style", Palatino, Georgia, serif;
   --font-sans: "Outfit", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --color-cream: #faf6f0;
-  --color-parchment: #f3ebe0;
-  --color-bark: #3d2c1e;
-  --color-bark-light: #5c4a3a;
-  --color-sage: #6b7f6a;
-  --color-sage-light: #8fa38e;
-  --color-gold: #c4a35a;
-  --color-rose: #c17f7a;
+  --color-cream: #f5f6f8;
+  --color-parchment: #e8eaef;
+  --color-bark: #2a3140;
+  --color-bark-light: #5a6270;
+  --color-sage: #6b7d8f;
+  --color-sage-light: #9aabb8;
+  --color-gold: #a8926a;
+  --color-rose: #b07a8a;
+  --color-slate: #4a5568;
+  --color-slate-deep: #343d4d;
+  --color-male: #3d5366;
+  --color-female: #6d4a58;
   --ease-liquid: cubic-bezier(0.34, 1.2, 0.64, 1);
   --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -26,7 +30,7 @@ body {
   font-family: var(--font-sans);
   color: var(--color-bark);
   -webkit-font-smoothing: antialiased;
-  background: #ebe4d8;
+  background: #e8eaef;
 }
 
 ::selection {
@@ -39,10 +43,10 @@ body {
   isolation: isolate;
   background: linear-gradient(
     145deg,
-    #f8f2ea 0%,
-    #ebe4d8 35%,
-    #e8e0d4 65%,
-    #f5efe6 100%
+    #f5f6f8 0%,
+    #e8eaef 35%,
+    #dfe3e9 65%,
+    #eef0f4 100%
   );
 }
 
@@ -67,7 +71,7 @@ body {
   height: 55vmax;
   top: -18%;
   left: -12%;
-  background: radial-gradient(circle at 30% 30%, #a8c4a6 0%, transparent 65%);
+  background: radial-gradient(circle at 30% 30%, #9aabb8 0%, transparent 65%);
   animation: blob-drift-1 22s var(--ease-smooth) infinite;
 }
 
@@ -76,7 +80,7 @@ body {
   height: 45vmax;
   bottom: -15%;
   right: -8%;
-  background: radial-gradient(circle at 60% 40%, #d4b896 0%, transparent 65%);
+  background: radial-gradient(circle at 60% 40%, #c4b49a 0%, transparent 65%);
   animation: blob-drift-2 26s var(--ease-smooth) infinite;
 }
 
@@ -85,7 +89,7 @@ body {
   height: 35vmax;
   top: 40%;
   left: 45%;
-  background: radial-gradient(circle at 50% 50%, #d4a5a0 0%, transparent 70%);
+  background: radial-gradient(circle at 50% 50%, #c4a0b0 0%, transparent 70%);
   animation: blob-drift-3 20s var(--ease-smooth) infinite;
   opacity: 0.35;
 }
@@ -164,9 +168,9 @@ body {
 }
 
 .glass-card-male {
-  border-color: color-mix(in srgb, #4a6fa5 28%, transparent);
+  border-color: color-mix(in srgb, var(--color-sage) 32%, transparent);
   box-shadow:
-    0 4px 20px color-mix(in srgb, #4a6fa5 8%, transparent),
+    0 4px 20px color-mix(in srgb, var(--color-sage) 10%, transparent),
     inset 0 1px 0 color-mix(in srgb, white 80%, transparent);
 }
 
@@ -203,7 +207,7 @@ body {
   background: linear-gradient(
     160deg,
     color-mix(in srgb, white 88%, transparent) 0%,
-    color-mix(in srgb, #f8f2ea 92%, transparent) 100%
+    color-mix(in srgb, var(--color-cream) 92%, transparent) 100%
   );
   backdrop-filter: blur(28px) saturate(1.4);
   -webkit-backdrop-filter: blur(28px) saturate(1.4);
@@ -218,6 +222,21 @@ body {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   animation: overlay-in 0.35s var(--ease-smooth);
+}
+
+.person-detail-overlay {
+  pointer-events: none;
+  animation: overlay-in 0.25s var(--ease-smooth);
+}
+
+.person-detail-overlay > * {
+  pointer-events: auto;
+}
+
+.person-detail-overlay > button:first-child {
+  background: color-mix(in srgb, var(--color-bark) 12%, transparent);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 .glass-toolbar {
@@ -309,6 +328,7 @@ body {
   border: none;
   background: transparent;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .ancestor-branch-hint-interactive {
@@ -318,11 +338,80 @@ body {
   border: none;
   background: transparent;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
-.ancestor-branch-hint-interactive:hover .descendant-branch-node-center {
-  opacity: 1;
-  stroke-width: 1.5;
+.ancestor-branch-hint-interactive:hover .branch-arrow-liquid,
+.descendant-branch-hint-interactive:hover .branch-arrow-liquid {
+  animation-duration: 1.6s;
+}
+
+.branch-arrow-liquid {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation:
+    branch-arrow-appear 0.38s var(--ease-liquid) both,
+    branch-arrow-liquid-breathe 2.6s var(--ease-liquid) 0.38s infinite;
+}
+
+.branch-arrow-depth {
+  fill: color-mix(in srgb, var(--color-bark) 62%, transparent);
+  opacity: 0.34;
+}
+
+.branch-arrow-body {
+  stroke-width: 0.85;
+  stroke-linejoin: round;
+}
+
+.branch-arrow-shine {
+  opacity: 0.72;
+  animation: branch-arrow-shimmer 2.2s ease-in-out infinite;
+}
+
+@keyframes branch-arrow-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.55) translateY(var(--branch-arrow-enter, 4px));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.branch-arrow-down {
+  --branch-arrow-lift: 0.4px;
+  --branch-arrow-enter: -4px;
+}
+
+.branch-arrow-up {
+  --branch-arrow-enter: 4px;
+}
+
+@keyframes branch-arrow-liquid-breathe {
+  0%,
+  100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.09) translateY(var(--branch-arrow-lift, -0.4px));
+  }
+}
+
+@keyframes branch-arrow-shimmer {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.98;
+  }
+}
+
+.ancestor-branch-stem {
+  stroke-dasharray: none;
+  opacity: 0.82;
 }
 
 .descendant-branch-hint-svg {
@@ -471,7 +560,7 @@ body {
   gap: 0.35rem;
   padding: 0.55rem 0.5rem 0.45rem;
   border-radius: 0.55rem;
-  background: rgb(18 14 10 / 88%);
+  background: rgb(26 30 38 / 88%);
   border-top: 1px solid color-mix(in srgb, white 22%, transparent);
 }
 
@@ -487,7 +576,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: color-mix(in srgb, #faf8f4 82%, #c8c0b8);
+  color: color-mix(in srgb, var(--color-cream) 82%, var(--color-sage-light));
 }
 
 .person-card-detail-value {
@@ -495,7 +584,7 @@ body {
   font-size: 0.76rem;
   font-weight: 500;
   line-height: 1.35;
-  color: #faf8f4;
+  color: var(--color-cream);
   text-shadow: 0 1px 2px rgb(0 0 0 / 45%);
   white-space: normal;
   word-break: break-word;
@@ -539,7 +628,7 @@ body {
   border-radius: 1.05rem;
   transform: translateZ(-7px) translateY(3px);
   pointer-events: none;
-  background: linear-gradient(165deg, #2a2018 0%, #1c1510 55%, #12100c 100%);
+  background: linear-gradient(165deg, #2a3140 0%, #222830 55%, #181c22 100%);
   box-shadow: 0 10px 22px rgb(0 0 0 / 38%);
   transition: transform 0.35s var(--ease-liquid), box-shadow 0.35s var(--ease-smooth);
 }
@@ -555,11 +644,11 @@ body {
 }
 
 .person-card-back.person-card-face-male {
-  background: linear-gradient(165deg, #182824 0%, #101c18 55%, #0a1210 100%);
+  background: linear-gradient(165deg, #182028 0%, #101820 55%, #0a1018 100%);
 }
 
 .person-card-back.person-card-face-female {
-  background: linear-gradient(165deg, #3e1e14 0%, #2c1410 55%, #1e0c08 100%);
+  background: linear-gradient(165deg, #281820 0%, #201018 55%, #180c10 100%);
 }
 
 .person-card-face {
@@ -569,7 +658,7 @@ body {
   box-sizing: border-box;
   border-radius: 1.05rem;
   padding: 0.65rem 0.72rem;
-  background: linear-gradient(168deg, #5c4a38 0%, #4a3a2c 38%, #3a2e22 72%, #32281e 100%);
+  background: linear-gradient(168deg, #4a5568 0%, #3d4656 38%, #323a48 72%, #2a3140 100%);
   border: 1px solid color-mix(in srgb, white 16%, transparent);
   transform: translateZ(5px);
   transform-style: preserve-3d;
@@ -619,11 +708,11 @@ body {
 
 .person-card-face-male {
   border-color: color-mix(in srgb, var(--color-sage-light) 48%, transparent);
-  background: linear-gradient(168deg, #3f5e54 0%, #314a42 40%, #263c36 74%, #1f332e 100%);
+  background: linear-gradient(168deg, #4a6278 0%, #3d5366 40%, #334858 74%, #2a3d4d 100%);
   box-shadow:
     0 1px 2px rgb(0 0 0 / 34%),
-    0 6px 16px rgb(16 32 26 / 42%),
-    0 14px 30px rgb(16 32 26 / 28%),
+    0 6px 16px rgb(26 40 56 / 42%),
+    0 14px 30px rgb(26 40 56 / 28%),
     inset 1px 1px 0 color-mix(in srgb, var(--color-sage-light) 30%, transparent),
     inset 2px 8px 14px color-mix(in srgb, white 6%, transparent),
     inset -1px -2px 4px color-mix(in srgb, black 30%, transparent),
@@ -631,13 +720,13 @@ body {
 }
 
 .person-card-face-female {
-  border-color: color-mix(in srgb, #d06048 42%, transparent);
-  background: linear-gradient(168deg, #9a4534 0%, #7d3628 40%, #5f281e 74%, #4f2218 100%);
+  border-color: color-mix(in srgb, var(--color-rose) 42%, transparent);
+  background: linear-gradient(168deg, #8a5a6a 0%, #6d4a58 40%, #553a46 74%, #483040 100%);
   box-shadow:
     0 1px 2px rgb(0 0 0 / 34%),
-    0 6px 16px rgb(72 28 18 / 42%),
-    0 14px 30px rgb(72 28 18 / 28%),
-    inset 1px 1px 0 color-mix(in srgb, #f0b8a0 24%, transparent),
+    0 6px 16px rgb(56 32 44 / 42%),
+    0 14px 30px rgb(56 32 44 / 28%),
+    inset 1px 1px 0 color-mix(in srgb, #d8b0bc 24%, transparent),
     inset 2px 8px 14px color-mix(in srgb, white 5%, transparent),
     inset -1px -2px 4px color-mix(in srgb, black 30%, transparent),
     inset 0 -4px 10px color-mix(in srgb, black 42%, transparent);
@@ -718,7 +807,7 @@ body {
   font-family: var(--font-sans);
   font-size: 0.72rem;
   font-weight: 500;
-  color: color-mix(in srgb, var(--color-gold) 75%, #faf8f4);
+  color: color-mix(in srgb, var(--color-gold) 75%, var(--color-cream));
   text-shadow:
     -1px -1px 0 color-mix(in srgb, var(--color-gold) 32%, transparent),
     1px 1px 0 rgb(0 0 0 / 48%),
@@ -755,7 +844,7 @@ body {
 }
 
 .person-card-3d.selected .person-card-name {
-  color: #fffef9;
+  color: #f8f9fb;
   text-shadow:
     -1px -1px 0 color-mix(in srgb, var(--color-gold) 42%, transparent),
     0 -1px 0 color-mix(in srgb, white 18%, transparent),
@@ -793,9 +882,13 @@ body {
   stroke-linecap: round;
 }
 
-.descendant-branch-hint-interactive:hover .descendant-branch-node {
-  opacity: 1;
-  stroke-width: 1.5;
+.thenkalai-namam-mark {
+  filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--color-bark) 28%, transparent));
+}
+
+.descendant-branch-stem-solid {
+  stroke-dasharray: none;
+  opacity: 0.82;
 }
 
 .descendant-branch-stem,
@@ -857,7 +950,9 @@ body {
   .descendant-branch-stem,
   .descendant-branch-node-left,
   .descendant-branch-node-center,
-  .descendant-branch-node-right {
+  .descendant-branch-node-right,
+  .branch-arrow-liquid,
+  .branch-arrow-shine {
     animation: none;
   }
 }
@@ -947,7 +1042,7 @@ body {
 }
 
 .child-edge-entering {
-  animation: child-edge-draw 0.75s cubic-bezier(0.16, 1, 0.3, 1) 1.5s both;
+  animation: child-edge-draw 0.25s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
 }
 
 @keyframes child-edge-draw {

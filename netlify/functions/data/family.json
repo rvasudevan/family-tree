@@ -356,9 +356,11 @@
   },
   {
     "id": "jv",
-    "firstName": "Jayasri",
+    "firstName": "Jayashree",
     "lastName": "Vasudevan",
     "gender": "female",
+    "birthYear": "9 May 1958",
+    "avatarUrl": "/avatars/jv.png",
     "spouseId": "rv",
     "generation": 3
   },
@@ -566,7 +568,8 @@
     "spouseId": "sj",
     "fatherId": "nr",
     "motherId": "jn",
-    "generation": 3
+    "generation": 3,
+    "siblingOrder": 1
   },
   {
     "id": "sj",
@@ -586,7 +589,8 @@
     "spouseId": "jn4",
     "fatherId": "nr",
     "motherId": "jn",
-    "generation": 3
+    "generation": 3,
+    "siblingOrder": 2
   },
   {
     "id": "jn4",
@@ -606,7 +610,8 @@
     "spouseId": "sl",
     "fatherId": "nr",
     "motherId": "jn",
-    "generation": 3
+    "generation": 3,
+    "siblingOrder": 3
   },
   {
     "id": "sl",
@@ -626,7 +631,8 @@
     "spouseId": "rj2",
     "fatherId": "np",
     "motherId": "in",
-    "generation": 3
+    "generation": 3,
+    "siblingOrder": 1
   },
   {
     "id": "rj2",
@@ -643,7 +649,8 @@
     "gender": "male",
     "fatherId": "np",
     "motherId": "in",
-    "generation": 3
+    "generation": 3,
+    "siblingOrder": 2
   },
   {
     "id": "re",
@@ -654,7 +661,8 @@
     "spouseId": "ss2",
     "fatherId": "np",
     "motherId": "in",
-    "generation": 3
+    "generation": 3,
+    "siblingOrder": 3
   },
   {
     "id": "ss2",

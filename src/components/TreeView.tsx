@@ -5,14 +5,15 @@ const BRANCH_HINT_PAD = 58
 import type { FamilyGraph } from '../utils/relationships'
 import { layoutTree } from '../utils/treeLayout'
 import { PersonCard } from './PersonCard'
+import { ThenkalaiNamamMark } from './ThenkalaiNamamMark'
 
 interface TreeViewProps {
   graph: FamilyGraph
   focusId: string
   omitParents?: boolean
-  selectedId: string | null
-  onSelect: (id: string) => void
+  isAdmin?: boolean
   onFocus: (id: string, options?: { omitParents?: boolean }) => void
+  onAdminEdit?: (id: string) => void
 }
 
 
@@ -20,13 +21,22 @@ function centerX(node: { x: number }) {
   return node.x
 }
 
-const CHILD_REVEAL_STAGGER_MS = 2200
-const CHILD_REVEAL_ANIM_MS = 2200
+const CHILD_REVEAL_STAGGER_MS = 733
+const CHILD_REVEAL_ANIM_MS = 733
 const VIEWPORT_EASE = 'cubic-bezier(0.16, 1, 0.3, 1)'
 
 const KRISHNAMACHARI_ROOT_ID = 'kr'
 const KANAKAVALLI_ROOT_ID = 'ka'
 const KRISHNAMACHARI_COUPLE_IDS = new Set([KRISHNAMACHARI_ROOT_ID, KANAKAVALLI_ROOT_ID])
+
+type MarriageSymbol = 'chain' | 'thenkalai-namam'
+
+function isKrKaMarriage(from: string, to: string): boolean {
+  return (
+    (from === KRISHNAMACHARI_ROOT_ID && to === KANAKAVALLI_ROOT_ID) ||
+    (from === KANAKAVALLI_ROOT_ID && to === KRISHNAMACHARI_ROOT_ID)
+  )
+}
 
 interface FocusReturnContext {
   focusId: string
@@ -48,9 +58,9 @@ export function TreeView({
   graph,
   focusId,
   omitParents = false,
-  selectedId,
-  onSelect,
+  isAdmin = false,
   onFocus,
+  onAdminEdit,
 }: TreeViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(1)
@@ -58,6 +68,7 @@ export function TreeView({
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [revealedChildCount, setRevealedChildCount] = useState(0)
   const [enteringChildId, setEnteringChildId] = useState<string | null>(null)
+  const [unsettledNodeIds, setUnsettledNodeIds] = useState<Set<string>>(() => new Set())
   const [smoothViewport, setSmoothViewport] = useState(false)
   const dragRef = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null)
   const slotRefs = useRef<Map<string, HTMLDivElement>>(new Map())
@@ -104,6 +115,7 @@ export function TreeView({
     setExpandedId(null)
     setRevealedChildCount(0)
     setEnteringChildId(null)
+    setUnsettledNodeIds(new Set())
     returnContextRef.current = null
   }, [focusId, graph])
 
@@ -216,19 +228,30 @@ export function TreeView({
   }
 
   const handleCardClick = (id: string) => {
-    onSelect(id)
-    if (!graph.hasChildren(id)) return
+    if (id === focusId && omitParents) {
+      if (!graph.hasChildren(id)) return
 
-    if (expandedId === id) {
-      setExpandedId(null)
-      setRevealedChildCount(0)
-      setEnteringChildId(null)
+      if (expandedId === id) {
+        setExpandedId(null)
+        setRevealedChildCount(0)
+        setEnteringChildId(null)
+        return
+      }
+
+      setExpandedId(id)
+      setRevealedChildCount(1)
+      setSmoothViewport(true)
       return
     }
 
-    setExpandedId(id)
-    setRevealedChildCount(1)
+    returnContextRef.current = {
+      focusId,
+      expandedId,
+      revealedChildCount,
+    }
+    pendingHintNavigationRef.current = true
     setSmoothViewport(true)
+    onFocus(id, { omitParents: true })
   }
 
   const handleFocusFromHint = (id: string) => {
@@ -317,12 +340,27 @@ export function TreeView({
   const descendantHints = useMemo(() => {
     if (!tree || !layout) return []
     const rootCoupleCenterX = rootLevelCoupleCenterX(layout.nodes, focusId, spouseMap)
-    return collectDescendantHints(tree, nodeMap, graph, focusId, rootCoupleCenterX)
+    return collectDescendantHints(tree, nodeMap, graph, focusId, rootCoupleCenterX, spouseMap)
   }, [tree, layout, nodeMap, graph, focusId, spouseMap])
 
   const ancestorHints = useMemo(
-    () => (layout ? collectAncestorHints(layout.nodes, graph) : []),
-    [layout, graph],
+    () => (layout ? collectAncestorHints(layout.nodes, graph, spouseMap) : []),
+    [layout, graph, spouseMap],
+  )
+
+  const isHintReady = useCallback(
+    (memberId: string) => !unsettledNodeIds.has(memberId) && !hiddenNodeIds.has(memberId),
+    [unsettledNodeIds, hiddenNodeIds],
+  )
+
+  const visibleAncestorHints = useMemo(
+    () => ancestorHints.filter((hint) => isHintReady(hint.id)),
+    [ancestorHints, isHintReady],
+  )
+
+  const visibleDescendantHints = useMemo(
+    () => descendantHints.filter((hint) => isHintReady(hint.id)),
+    [descendantHints, isHintReady],
   )
 
   useLayoutEffect(() => {
@@ -331,6 +369,20 @@ export function TreeView({
     const member = graph.get(enteringChildId)
     const spouse = member ? graph.getSpouse(member) : undefined
     const ids = [enteringChildId, spouse?.id].filter((id): id is string => Boolean(id))
+
+    setUnsettledNodeIds((prev) => {
+      const next = new Set(prev)
+      ids.forEach((id) => next.add(id))
+      return next
+    })
+
+    const markSettled = () => {
+      setUnsettledNodeIds((prev) => {
+        const next = new Set(prev)
+        ids.forEach((id) => next.delete(id))
+        return next
+      })
+    }
 
     const animations = ids
       .map((id) => {
@@ -341,10 +393,17 @@ export function TreeView({
       })
       .filter((anim): anim is Animation => anim != null)
 
+    if (animations.length === 0) {
+      markSettled()
+    } else {
+      void Promise.all(animations.map((anim) => anim.finished)).then(markSettled).catch(markSettled)
+    }
+
     return () => {
       animations.forEach((anim) => {
         if (anim.playState !== 'finished') anim.cancel()
       })
+      markSettled()
     }
   }, [enteringChildId, parentOrigin, layout, nodeMap, graph])
 
@@ -414,6 +473,7 @@ export function TreeView({
                       x2={x}
                       y2={topY(bottom)}
                       vertical
+                      symbol={isKrKaMarriage(edge.from, edge.to) ? 'thenkalai-namam' : 'chain'}
                     />
                   )
                 }
@@ -429,6 +489,7 @@ export function TreeView({
                     x2={centerX(right) - right.cardW / 2}
                     y2={y}
                     vertical={false}
+                    symbol={isKrKaMarriage(edge.from, edge.to) ? 'thenkalai-namam' : 'chain'}
                   />
                 )
               }
@@ -438,17 +499,10 @@ export function TreeView({
               let y1 = bottomY(from)
               if (edge.coupleFrom) {
                 const [idA, idB] = edge.coupleFrom
-                const nodeA = nodeMap.get(idA)
-                const nodeB = nodeMap.get(idB)
-                if (nodeA && nodeB) {
-                  if (Math.abs(centerX(nodeA) - centerX(nodeB)) < 4) {
-                    const bottomNode = nodeA.y > nodeB.y ? nodeA : nodeB
-                    parentX = centerX(bottomNode)
-                    y1 = bottomY(bottomNode)
-                  } else {
-                    parentX = (centerX(nodeA) + centerX(nodeB)) / 2
-                    y1 = Math.max(bottomY(nodeA), bottomY(nodeB))
-                  }
+                const parentAnchor = coupleFromAnchor(idA, idB, nodeMap)
+                if (parentAnchor) {
+                  parentX = parentAnchor.cx
+                  y1 = parentAnchor.bottomY
                 }
               }
 
@@ -456,14 +510,19 @@ export function TreeView({
               const x1 = parentX
               const x2 = childAnchor.x
               const y2 = childAnchor.y
-              const busY = y1 + Math.max(18, (y2 - y1) * 0.45)
+              const aligned = Math.abs(x1 - x2) < 0.5
+              const busY = aligned ? y1 + (y2 - y1) * 0.45 : y1 + Math.max(18, (y2 - y1) * 0.45)
               const edgeEntering = enteringChildId === child.id
 
               return (
                 <path
                   key={`e-${i}`}
                   className={edgeEntering ? 'child-edge-entering' : undefined}
-                  d={`M ${x1} ${y1} L ${x1} ${busY} L ${x2} ${busY} L ${x2} ${y2}`}
+                  d={
+                    aligned
+                      ? `M ${x1} ${y1} L ${x2} ${y2}`
+                      : `M ${x1} ${y1} L ${x1} ${busY} L ${x2} ${busY} L ${x2} ${y2}`
+                  }
                   fill="none"
                   stroke="var(--color-sage-light)"
                   strokeWidth={1.25}
@@ -512,11 +571,13 @@ export function TreeView({
                 member={node.member}
                 graph={graph}
                 displayRole={node.role}
-                selected={selectedId === node.id}
                 expanded={expandedId === node.id}
                 showBirthPlace={false}
                 onClick={() => handleCardClick(node.id)}
-                onDoubleClick={() => onFocus(node.id)}
+                onDoubleClick={() => {
+                  if (isAdmin && onAdminEdit) onAdminEdit(node.id)
+                  else onFocus(node.id)
+                }}
               />
             </div>
             )
@@ -532,7 +593,7 @@ export function TreeView({
             ...viewportStyle,
           }}
         >
-          {ancestorHints.map((hint) => (
+          {visibleAncestorHints.map((hint) => (
             <AncestorBranchHintInteractive
               key={`up-${hint.id}`}
               cx={hint.cx}
@@ -544,7 +605,7 @@ export function TreeView({
               onMoveUp={handleMoveUpGeneration}
             />
           ))}
-          {descendantHints.map((hint) => (
+          {visibleDescendantHints.map((hint) => (
             <DescendantBranchHintInteractive
               key={`hint-${hint.id}`}
               cx={hint.cx}
@@ -561,8 +622,8 @@ export function TreeView({
       </div>
 
       <div className="glass shrink-0 border-t border-[color-mix(in_srgb,white_35%,transparent)] px-4 py-2.5 text-center text-xs text-[var(--color-bark-light)]">
-        Click someone to reveal their children · Click again to collapse · Click bubble above to move
-        up · Click branch hint below to open that branch · Double-click a card to re-center · Drag to pan
+        Click someone to center on them · Click again to collapse their children · Click the arrow above to
+        move up · Click the arrow below a branch to open it · Double-click a card to re-center · Drag to pan
       </div>
     </div>
   )
@@ -628,32 +689,16 @@ function stackZIndex(
 }
 
 type LayoutPoint = { x: number; y: number; cardW: number; cardH: number }
+type ColumnPoint = Pick<LayoutPoint, 'x' | 'y' | 'cardH'>
 
 function parentRevealOrigin(
   expandedId: string,
   nodeMap: Map<string, LayoutPoint>,
   spouseMap: Map<string, string>,
 ): { x: number; y: number } | null {
-  const parent = nodeMap.get(expandedId)
-  if (!parent) return null
-
-  const spouseId = spouseMap.get(expandedId)
-  const spouse = spouseId ? nodeMap.get(spouseId) : undefined
-
-  let originX = parent.x
-  let originY = parent.y + parent.cardH
-
-  if (spouse) {
-    const sameColumn = Math.abs(spouse.x - parent.x) < 4
-    if (sameColumn) {
-      originY = Math.max(originY, spouse.y + spouse.cardH)
-    } else {
-      originX = (parent.x + spouse.x) / 2
-      originY = Math.max(parent.y + parent.cardH, spouse.y + spouse.cardH)
-    }
-  }
-
-  return { x: originX, y: originY }
+  const column = coupleColumnBounds(expandedId, nodeMap, spouseMap)
+  if (!column) return null
+  return { x: column.cx, y: column.bottomY }
 }
 
 function revealOffset(node: LayoutPoint, origin: { x: number; y: number }) {
@@ -716,33 +761,71 @@ function runSpiralReveal(
   return anim
 }
 
+/** Shared column geometry for a person and their spouse in the layout. */
+function coupleColumnBounds(
+  memberId: string,
+  nodeMap: Map<string, ColumnPoint>,
+  spouseMap: Map<string, string>,
+): { cx: number; topY: number; bottomY: number } | null {
+  const member = nodeMap.get(memberId)
+  if (!member) return null
+
+  const spouseId = spouseMap.get(memberId)
+  const spouse = spouseId ? nodeMap.get(spouseId) : undefined
+
+  if (!spouse) {
+    return {
+      cx: member.x,
+      topY: member.y,
+      bottomY: member.y + member.cardH,
+    }
+  }
+
+  const sameColumn = Math.abs(member.x - spouse.x) < 4
+  if (sameColumn) {
+    return {
+      cx: member.x,
+      topY: Math.min(member.y, spouse.y),
+      bottomY: Math.max(member.y + member.cardH, spouse.y + spouse.cardH),
+    }
+  }
+
+  return {
+    cx: (member.x + spouse.x) / 2,
+    topY: Math.min(member.y, spouse.y),
+    bottomY: Math.max(member.y + member.cardH, spouse.y + spouse.cardH),
+  }
+}
+
+function coupleFromAnchor(
+  idA: string,
+  idB: string,
+  nodeMap: Map<string, LayoutPoint>,
+): { cx: number; bottomY: number } | null {
+  const nodeA = nodeMap.get(idA)
+  const nodeB = nodeMap.get(idB)
+  if (!nodeA || !nodeB) return null
+
+  if (Math.abs(nodeA.x - nodeB.x) < 4) {
+    const bottomNode = nodeA.y > nodeB.y ? nodeA : nodeB
+    return { cx: nodeA.x, bottomY: bottomNode.y + bottomNode.cardH }
+  }
+
+  return {
+    cx: (nodeA.x + nodeB.x) / 2,
+    bottomY: Math.max(nodeA.y + nodeA.cardH, nodeB.y + nodeB.cardH),
+  }
+}
+
 /** Anchor parent-child lines on the child column center (matches the trunk from ancestors). */
 function childColumnAnchor(
   childId: string,
   nodeMap: Map<string, LayoutPoint>,
   spouseMap: Map<string, string>,
 ): { x: number; y: number } {
-  const child = nodeMap.get(childId)
-  if (!child) return { x: 0, y: 0 }
-
-  const spouseId = spouseMap.get(childId)
-  const spouse = spouseId ? nodeMap.get(spouseId) : undefined
-  if (!spouse) {
-    return { x: child.x, y: child.y }
-  }
-
-  const sameColumn = Math.abs(child.x - spouse.x) < 4
-  if (sameColumn) {
-    const top = child.y < spouse.y ? child : spouse
-    return { x: child.x, y: top.y }
-  }
-
-  const left = child.x < spouse.x ? child : spouse
-  const right = left === child ? spouse : child
-  return {
-    x: (left.x + right.x) / 2,
-    y: Math.min(child.y, spouse.y),
-  }
+  const column = coupleColumnBounds(childId, nodeMap, spouseMap)
+  if (!column) return { x: 0, y: 0 }
+  return { x: column.cx, y: column.topY }
 }
 
 function ToolbarButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
@@ -757,29 +840,40 @@ function ToolbarButton({ onClick, children }: { onClick: () => void; children: R
   )
 }
 
-/** Interlocking rings between spouses, with lines connecting card edges */
+/** Marriage connector between spouses — chain rings, or Thenkalai namam for Kr & Ka */
 function MarriageChainLink({
   x1,
   y1,
   x2,
   y2,
   vertical,
+  symbol = 'chain',
 }: {
   x1: number
   y1: number
   x2: number
   y2: number
   vertical: boolean
+  symbol?: MarriageSymbol
 }) {
   const cx = (x1 + x2) / 2
   const cy = (y1 + y2) / 2
+  const namamScale = vertical ? 0.78 : 0.92
 
   return (
     <g className="marriage-chain-link">
       <line className="marriage-chain-connector" x1={x1} y1={y1} x2={x2} y2={y2} />
       <g transform={`translate(${cx}, ${cy}) rotate(${vertical ? 90 : 0})`}>
-        <ellipse className="marriage-chain-ring" cx={-4.5} cy={0} rx={7.5} ry={4.8} />
-        <ellipse className="marriage-chain-ring" cx={4.5} cy={0} rx={7.5} ry={4.8} />
+        {symbol === 'thenkalai-namam' ? (
+          <g transform={`scale(${namamScale})`}>
+            <ThenkalaiNamamMark />
+          </g>
+        ) : (
+          <>
+            <ellipse className="marriage-chain-ring" cx={-4.5} cy={0} rx={7.5} ry={4.8} />
+            <ellipse className="marriage-chain-ring" cx={4.5} cy={0} rx={7.5} ry={4.8} />
+          </>
+        )}
       </g>
     </g>
   )
@@ -791,10 +885,23 @@ interface AncestorHint {
   y: number
 }
 
-const ANCESTOR_HINT_HEIGHT = 32
+const BRANCH_HINT_HIT_WIDTH = 52
+const ANCESTOR_HINT_GAP = 8
+const ANCESTOR_HINT_HIT_HEIGHT = 52
+const ANCESTOR_HINT_VISUAL_WIDTH = 32
+const ANCESTOR_HINT_VISUAL_HEIGHT = 32
+const DESCENDANT_HINT_HIT_HEIGHT = 56
+const DESCENDANT_HINT_VISUAL_WIDTH = 32
+const DESCENDANT_HINT_VISUAL_HEIGHT = 44
 
-function collectAncestorHints(nodes: LayoutNode[], graph: FamilyGraph): AncestorHint[] {
+function collectAncestorHints(
+  nodes: LayoutNode[],
+  graph: FamilyGraph,
+  spouseMap: Map<string, string>,
+): AncestorHint[] {
   const hints: AncestorHint[] = []
+  const nodeMap = new Map(nodes.map((n) => [n.id, n]))
+  const handledPairs = new Set<string>()
 
   for (const node of nodes) {
     if (node.id === KRISHNAMACHARI_ROOT_ID) continue
@@ -805,10 +912,39 @@ function collectAncestorHints(nodes: LayoutNode[], graph: FamilyGraph): Ancestor
     const { father, mother } = graph.getParents(member)
     if (!father && !mother) continue
 
+    const spouseId = spouseMap.get(node.id)
+    const spouseNode = spouseId ? nodeMap.get(spouseId) : undefined
+
+    if (spouseNode && Math.abs(spouseNode.x - node.x) >= 4) {
+      const pairKey = [node.id, spouseNode.id].sort().join(':')
+      if (handledPairs.has(pairKey)) continue
+      handledPairs.add(pairKey)
+
+      const column = coupleColumnBounds(node.id, nodeMap, spouseMap)
+      if (!column) continue
+
+      const spouseMember = graph.get(spouseNode.id)
+      const spouseParents = spouseMember ? graph.getParents(spouseMember) : {}
+      const memberId =
+        father || mother
+          ? node.id
+          : spouseParents.father || spouseParents.mother
+            ? spouseNode.id
+            : node.id
+
+      hints.push({
+        id: memberId,
+        cx: column.cx,
+        y: column.topY - ANCESTOR_HINT_HIT_HEIGHT - ANCESTOR_HINT_GAP,
+      })
+      continue
+    }
+
+    const column = coupleColumnBounds(node.id, nodeMap, spouseMap)
     hints.push({
       id: node.id,
-      cx: node.x,
-      y: node.y - ANCESTOR_HINT_HEIGHT - 8,
+      cx: column?.cx ?? node.x,
+      y: (column?.topY ?? node.y) - ANCESTOR_HINT_HIT_HEIGHT - ANCESTOR_HINT_GAP,
     })
   }
 
@@ -842,13 +978,14 @@ function collectDescendantHints(
   graph: FamilyGraph,
   focusId: string,
   rootCoupleCenterX: number | null,
+  spouseMap: Map<string, string>,
 ): DescendantHint[] {
   const hints: DescendantHint[] = []
   const atKrKaRoot = rootCoupleCenterX !== null
 
   const walk = (treeNode: TreeNode) => {
     if (graph.hasChildren(treeNode.member.id) && treeNode.children.length === 0) {
-      const column = columnBottom(treeNode, nodeMap)
+      const column = columnBottom(treeNode, nodeMap, spouseMap)
       if (!column) return
 
       const centerOnParents = atKrKaRoot && treeNode.member.id === focusId
@@ -868,18 +1005,12 @@ function collectDescendantHints(
 
 function columnBottom(
   treeNode: TreeNode,
-  nodeMap: Map<string, { x: number; y: number; cardH: number }>,
+  nodeMap: Map<string, ColumnPoint>,
+  spouseMap: Map<string, string>,
 ): { cx: number; y: number } | null {
-  const memberLayout = nodeMap.get(treeNode.member.id)
-  if (!memberLayout) return null
-
-  let bottom = memberLayout.y + memberLayout.cardH
-  if (treeNode.spouse) {
-    const spouseLayout = nodeMap.get(treeNode.spouse.id)
-    if (spouseLayout) bottom = Math.max(bottom, spouseLayout.y + spouseLayout.cardH)
-  }
-
-  return { cx: memberLayout.x, y: bottom + 10 }
+  const column = coupleColumnBounds(treeNode.member.id, nodeMap, spouseMap)
+  if (!column) return null
+  return { cx: column.cx, y: column.bottomY + 10 }
 }
 
 /** Frame parents + focus couple (and expanded descendants) for branch-hint navigation */
@@ -914,7 +1045,75 @@ function ancestorViewportFrame(
   }
 }
 
-/** Single bubble above a card — click to move up one generation */
+function LiquidBranchArrow({
+  id,
+  direction,
+  center,
+  tipY,
+  baseY,
+  half,
+  tone,
+}: {
+  id: string
+  direction: 'up' | 'down'
+  center: number
+  tipY: number
+  baseY: number
+  half: number
+  tone: 'gold' | 'sage'
+}) {
+  const points = `${center},${tipY} ${center + half},${baseY} ${center - half},${baseY}`
+  const depthPoints =
+    direction === 'up'
+      ? `${center},${tipY + 0.8} ${center + half + 0.55},${baseY + 1.15} ${center - half + 0.55},${baseY + 1.15}`
+      : `${center},${tipY + 1.15} ${center + half + 0.55},${baseY + 0.8} ${center - half - 0.55},${baseY + 0.8}`
+  const shinePoints =
+    direction === 'up'
+      ? `${center},${tipY + 2.2} ${center - half * 0.44},${baseY - 1.4} ${center - half + 1},${baseY - 0.35}`
+      : `${center},${tipY - 2.2} ${center - half * 0.44},${baseY + 1.4} ${center - half + 1},${baseY + 0.35}`
+
+  const bodyId = `${id}-body`
+  const shineId = `${id}-shine`
+  const filterId = `${id}-filter`
+  const palette =
+    tone === 'gold'
+      ? { hi: '#e8dcc8', mid: '#a8926a', lo: '#6a5a44', spec: '#f8f4ee', stroke: '#8a7858' }
+      : { hi: '#c8d4de', mid: '#9aabb8', lo: '#5a6a78', spec: '#f4f6f8', stroke: '#6b7d8f' }
+  const gradY1 = direction === 'up' ? '0%' : '100%'
+  const gradY2 = direction === 'up' ? '100%' : '0%'
+
+  return (
+    <g className={`branch-arrow-liquid branch-arrow-liquid-${tone} branch-arrow-${direction}`}>
+      <defs>
+        <linearGradient id={bodyId} x1="18%" y1={gradY1} x2="88%" y2={gradY2}>
+          <stop offset="0%" stopColor={palette.hi} />
+          <stop offset="46%" stopColor={palette.mid} />
+          <stop offset="100%" stopColor={palette.lo} />
+        </linearGradient>
+        <linearGradient id={shineId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={palette.spec} stopOpacity="0.9" />
+          <stop offset="100%" stopColor={palette.spec} stopOpacity="0" />
+        </linearGradient>
+        <filter id={filterId} x="-90%" y="-90%" width="280%" height="280%">
+          <feDropShadow dx="0" dy="1.5" stdDeviation="1.15" floodColor="#2a3140" floodOpacity="0.4" />
+          <feDropShadow dx="0" dy="0" stdDeviation="0.7" floodColor={palette.mid} floodOpacity="0.38" />
+        </filter>
+      </defs>
+      <g filter={`url(#${filterId})`}>
+        <polygon className="branch-arrow-depth" points={depthPoints} />
+        <polygon
+          className="branch-arrow-body"
+          points={points}
+          fill={`url(#${bodyId})`}
+          stroke={palette.stroke}
+        />
+        <polygon className="branch-arrow-shine" points={shinePoints} fill={`url(#${shineId})`} />
+      </g>
+    </g>
+  )
+}
+
+/** Upward arrow above a card — click to move up one generation */
 function AncestorBranchHintInteractive({
   cx,
   y,
@@ -932,11 +1131,15 @@ function AncestorBranchHintInteractive({
   returnFocusId?: string
   onMoveUp: (memberId: string) => void
 }) {
-  const width = 28
-  const height = ANCESTOR_HINT_HEIGHT
-  const center = width / 2
-  const nodeY = 8
-  const stemStart = 12
+  const visualWidth = ANCESTOR_HINT_VISUAL_WIDTH
+  const visualHeight = ANCESTOR_HINT_VISUAL_HEIGHT
+  const hitWidth = BRANCH_HINT_HIT_WIDTH
+  const hitHeight = ANCESTOR_HINT_HIT_HEIGHT
+  const center = visualWidth / 2
+  const arrowTipY = 4
+  const arrowBaseY = 13
+  const arrowHalf = 7
+  const stemStart = arrowBaseY
 
   const stopDrag = (e: React.PointerEvent) => {
     e.stopPropagation()
@@ -965,38 +1168,41 @@ function AncestorBranchHintInteractive({
   return (
     <button
       type="button"
-      className="ancestor-branch-hint-interactive absolute"
-      style={{ left: cx - center, top: y, width, height }}
+      className="ancestor-branch-hint-interactive absolute flex items-end justify-center"
+      style={{ left: cx - hitWidth / 2, top: y, width: hitWidth, height: hitHeight }}
       onPointerDown={stopDrag}
       onClick={handleClick}
       aria-label={label}
     >
       <svg
-        width={width}
-        height={height}
-        viewBox={`0 0 ${width} ${height}`}
+        width={visualWidth}
+        height={visualHeight}
+        viewBox={`0 0 ${visualWidth} ${visualHeight}`}
         className="ancestor-branch-hint-svg pointer-events-none"
         aria-hidden="true"
       >
-        <circle
-          className="descendant-branch-node descendant-branch-node-center"
-          cx={center}
-          cy={nodeY}
-          r={4.2}
+        <LiquidBranchArrow
+          id={`ancestor-${memberId}`}
+          direction="up"
+          center={center}
+          tipY={arrowTipY}
+          baseY={arrowBaseY}
+          half={arrowHalf}
+          tone="gold"
         />
         <line
-          className="descendant-branch-stem"
+          className="descendant-branch-stem ancestor-branch-stem"
           x1={center}
           y1={stemStart}
           x2={center}
-          y2={height}
+          y2={visualHeight}
         />
       </svg>
     </button>
   )
 }
 
-/** Small branching motif below siblings who have hidden descendants */
+/** Downward arrow below siblings who have hidden descendants */
 function DescendantBranchHintInteractive({
   cx,
   y,
@@ -1016,11 +1222,15 @@ function DescendantBranchHintInteractive({
   onFocus: (id: string) => void
   onExpand: (id: string) => void
 }) {
-  const width = 56
-  const height = 48
-  const center = width / 2
-  const stemEnd = 18
-  const branchY = 28
+  const visualWidth = DESCENDANT_HINT_VISUAL_WIDTH
+  const visualHeight = DESCENDANT_HINT_VISUAL_HEIGHT
+  const hitWidth = BRANCH_HINT_HIT_WIDTH
+  const hitHeight = DESCENDANT_HINT_HIT_HEIGHT
+  const center = visualWidth / 2
+  const arrowTipY = visualHeight - 4
+  const arrowBaseY = visualHeight - 16
+  const arrowHalf = 7
+  const stemEnd = arrowBaseY
 
   const stopDrag = (e: React.PointerEvent) => {
     e.stopPropagation()
@@ -1050,40 +1260,28 @@ function DescendantBranchHintInteractive({
   return (
     <button
       type="button"
-      className="descendant-branch-hint-interactive absolute"
-      style={{ left: cx - center, top: y, width, height }}
+      className="descendant-branch-hint-interactive absolute flex items-start justify-center"
+      style={{ left: cx - hitWidth / 2, top: y, width: hitWidth, height: hitHeight }}
       onPointerDown={stopDrag}
       onClick={handleClick}
       aria-label={label}
     >
       <svg
-        width={width}
-        height={height}
-        viewBox={`0 0 ${width} ${height}`}
+        width={visualWidth}
+        height={visualHeight}
+        viewBox={`0 0 ${visualWidth} ${visualHeight}`}
         className="descendant-branch-hint-svg pointer-events-none"
         aria-hidden="true"
       >
-        <line className="descendant-branch-stem" x1={center} y1={0} x2={center} y2={stemEnd} />
-        <line className="descendant-branch-fork" x1={center} y1={stemEnd} x2={center - 12} y2={branchY} />
-        <line className="descendant-branch-fork" x1={center} y1={stemEnd} x2={center} y2={branchY + 2} />
-        <line className="descendant-branch-fork" x1={center} y1={stemEnd} x2={center + 12} y2={branchY} />
-        <circle
-          className="descendant-branch-node descendant-branch-node-left"
-          cx={center - 12}
-          cy={branchY}
-          r={3.6}
-        />
-        <circle
-          className="descendant-branch-node descendant-branch-node-center"
-          cx={center}
-          cy={branchY + 2}
-          r={3.6}
-        />
-        <circle
-          className="descendant-branch-node descendant-branch-node-right"
-          cx={center + 12}
-          cy={branchY}
-          r={3.6}
+        <line className="descendant-branch-stem descendant-branch-stem-solid" x1={center} y1={0} x2={center} y2={stemEnd} />
+        <LiquidBranchArrow
+          id={`descendant-${memberId}`}
+          direction="down"
+          center={center}
+          tipY={arrowTipY}
+          baseY={arrowBaseY}
+          half={arrowHalf}
+          tone="sage"
         />
       </svg>
     </button>

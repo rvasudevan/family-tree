@@ -2,7 +2,7 @@
 
 An intuitive family tree viewer built from your existing family data export.
 
-**Live site:** [krishnamachari.netlify.app](https://krishnamachari.netlify.app)
+**Live site:** [8gk-family-tree.netlify.app](https://8gk-family-tree.netlify.app)
 
 ## Quick start
 
@@ -73,7 +73,7 @@ The app is configured for Netlify: static frontend in `dist/` and API routes as 
 4. Under **Site configuration → Environment variables**, add:
    - `ADMIN_PASSWORD` — your admin login password
    - `JWT_SECRET` — a long random string
-5. Deploy. The production site is at [krishnamachari.netlify.app](https://krishnamachari.netlify.app).
+5. Deploy. The production site is at [8gk-family-tree.netlify.app](https://8gk-family-tree.netlify.app).
 
 ### Local Netlify dev
 

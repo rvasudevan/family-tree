@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FamilyMember } from '../types'
 import type { FamilyGraph } from '../utils/relationships'
 import { cardDisplayName, displayName, genderLabel, lifespan } from '../utils/family'
@@ -15,6 +15,7 @@ interface PersonDetailProps {
   onNavigate: (id: string) => void
   onSaveMember?: (id: string, patch: Partial<FamilyMember>, spouseId?: string) => void
   onDelete?: (id: string) => void
+  docked?: boolean
 }
 
 export function PersonDetail({
@@ -26,6 +27,7 @@ export function PersonDetail({
   onNavigate,
   onSaveMember,
   onDelete,
+  docked = false,
 }: PersonDetailProps) {
   const [editing, setEditing] = useState(false)
   const spouse = graph.getSpouse(member)
@@ -34,54 +36,72 @@ export function PersonDetail({
   const siblings = graph.getSiblings(member)
   const life = lifespan(member)
 
+  useEffect(() => {
+    setEditing(false)
+  }, [member.id])
+
+  const closeEditor = () => {
+    setEditing(false)
+  }
+
   const handleDelete = () => {
     onDelete?.(member.id)
     onClose()
   }
 
+  const asideClass = docked
+    ? 'slide-in-right flex h-full w-full max-w-sm shrink-0 flex-col border-l border-[color-mix(in_srgb,var(--color-bark)_8%,transparent)] glass-modal sm:w-96'
+    : 'slide-in-right flex h-full w-full max-w-sm shrink-0 flex-col glass-modal sm:w-96'
+
   if (editing && isAdmin) {
+    const editor = (
+      <aside className={asideClass}>
+        <div className="flex items-start justify-between gap-3 border-b border-[color-mix(in_srgb,var(--color-bark)_8%,transparent)] px-5 py-4">
+          <div className="flex items-start gap-3">
+            <MemberAvatar member={member} size="lg" />
+            <div>
+              <h2 className="font-serif text-xl font-semibold leading-tight text-[var(--color-bark)]">
+                Edit {displayName(member)}
+              </h2>
+              <p className="mt-1 text-sm text-[var(--color-bark-light)]">Update details and relationships</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={closeEditor}
+            aria-label="Close editor"
+            className="rounded-lg px-2 py-1 text-[var(--color-bark-light)] transition-colors hover:bg-[var(--color-cream)] hover:text-[var(--color-bark)]"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <PersonEditForm
+            member={member}
+            members={members}
+            onSave={(patch, spouseId) => {
+              onSaveMember?.(member.id, patch, spouseId)
+              closeEditor()
+            }}
+            onDelete={handleDelete}
+            onCancel={closeEditor}
+          />
+        </div>
+      </aside>
+    )
+
+    if (docked) return editor
+
     return (
       <div className="fixed inset-0 z-50 flex items-stretch justify-end liquid-overlay">
-        <aside className="slide-in-right flex w-full max-w-md flex-col glass-modal sm:w-[28rem]">
-          <div className="flex items-start justify-between gap-3 border-b border-[color-mix(in_srgb,var(--color-bark)_8%,transparent)] px-5 py-4">
-            <div className="flex items-start gap-3">
-              <MemberAvatar member={member} size="lg" />
-              <div>
-                <h2 className="font-serif text-xl font-semibold leading-tight text-[var(--color-bark)]">
-                  Edit {displayName(member)}
-                </h2>
-                <p className="mt-1 text-sm text-[var(--color-bark-light)]">Update details and relationships</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setEditing(false)}
-              aria-label="Close editor"
-              className="rounded-lg px-2 py-1 text-[var(--color-bark-light)] transition-colors hover:bg-[var(--color-cream)] hover:text-[var(--color-bark)]"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto px-5 py-4">
-            <PersonEditForm
-              member={member}
-              members={members}
-              onSave={(patch, spouseId) => {
-                onSaveMember?.(member.id, patch, spouseId)
-                setEditing(false)
-              }}
-              onDelete={handleDelete}
-              onCancel={() => setEditing(false)}
-            />
-          </div>
-        </aside>
+        {editor}
       </div>
     )
   }
 
-  return (
-    <aside className="slide-in-right relative z-30 flex w-full max-w-sm shrink-0 flex-col glass border-l border-[color-mix(in_srgb,white_40%,transparent)] sm:w-96">
+  const panel = (
+    <aside className={asideClass}>
       <div className="flex items-start justify-between gap-3 border-b border-[color-mix(in_srgb,var(--color-bark)_6%,transparent)] px-5 py-4">
         <div className="flex items-start gap-3">
           <MemberAvatar member={member} size="lg" />
@@ -93,7 +113,7 @@ export function PersonDetail({
           </div>
         </div>
         <div className="flex gap-1">
-          {isAdmin && !editing && (
+          {isAdmin && (
             <button
               type="button"
               onClick={() => setEditing(true)}
@@ -113,88 +133,98 @@ export function PersonDetail({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4">
-        <>
-          <dl className="space-y-3 text-sm">
-              <DetailRow label="Gender" value={genderLabel(member.gender)} />
-              {member.birthPlace && <DetailRow label="Birth place" value={member.birthPlace} />}
-              {member.anniversary && <DetailRow label="Anniversary" value={member.anniversary} />}
-              {member.generation != null && (
-                <DetailRow label="Generation" value={`Gen ${member.generation}`} />
-              )}
-              {member.profession && <DetailRow label="Profession" value={member.profession} />}
-              {member.bio && <DetailRow label="Bio" value={member.bio} />}
-            </dl>
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+        <dl className="space-y-3 text-sm">
+          <DetailRow label="Gender" value={genderLabel(member.gender)} />
+          {member.birthPlace && <DetailRow label="Birth place" value={member.birthPlace} />}
+          {member.anniversary && <DetailRow label="Anniversary" value={member.anniversary} />}
+          {member.generation != null && <DetailRow label="Generation" value={`Gen ${member.generation}`} />}
+          {member.profession && <DetailRow label="Profession" value={member.profession} />}
+          {member.bio && <DetailRow label="Bio" value={member.bio} />}
+        </dl>
 
-            <div className="mt-6 space-y-5">
-              <RelationSection title="Parents">
-                {!parents.father && !parents.mother ? (
-                  <EmptyHint />
-                ) : (
-                  <div className="space-y-2">
-                    {parents.father && (
-                      <MiniNav
-                        member={parents.father}
-                        onNavigate={onNavigate}
-                        label="Father"
-                        displayRole="parent"
-                      />
-                    )}
-                    {parents.mother && (
-                      <MiniNav
-                        member={parents.mother}
-                        onNavigate={onNavigate}
-                        label="Mother"
-                        displayRole="parent"
-                      />
-                    )}
-                  </div>
+        <div className="mt-6 space-y-5">
+          <RelationSection title="Parents">
+            {!parents.father && !parents.mother ? (
+              <EmptyHint />
+            ) : (
+              <div className="space-y-2">
+                {parents.father && (
+                  <MiniNav
+                    member={parents.father}
+                    onNavigate={onNavigate}
+                    label="Father"
+                    displayRole="parent"
+                  />
                 )}
-              </RelationSection>
-
-              <RelationSection title="Spouse">
-                {spouse ? (
-                  <MiniNav member={spouse} onNavigate={onNavigate} displayRole="spouse" />
-                ) : (
-                  <EmptyHint />
+                {parents.mother && (
+                  <MiniNav
+                    member={parents.mother}
+                    onNavigate={onNavigate}
+                    label="Mother"
+                    displayRole="parent"
+                  />
                 )}
-              </RelationSection>
+              </div>
+            )}
+          </RelationSection>
 
-              <RelationSection title={`Children (${children.length})`}>
-                {children.length === 0 ? (
-                  <EmptyHint />
-                ) : (
-                  <div className="space-y-2">
-                    {children.map((child) => (
-                      <MiniNav key={child.id} member={child} onNavigate={onNavigate} />
-                    ))}
-                  </div>
-                )}
-              </RelationSection>
+          <RelationSection title="Spouse">
+            {spouse ? (
+              <MiniNav member={spouse} onNavigate={onNavigate} displayRole="spouse" />
+            ) : (
+              <EmptyHint />
+            )}
+          </RelationSection>
 
-              {siblings.length > 0 && (
-                <RelationSection title={`Siblings (${siblings.length})`}>
-                  <div className="space-y-2">
-                    {siblings.map((sibling) => (
-                      <MiniNav key={sibling.id} member={sibling} onNavigate={onNavigate} />
-                    ))}
-                  </div>
-                </RelationSection>
-              )}
-            </div>
-          </>
+          <RelationSection title={`Children (${children.length})`}>
+            {children.length === 0 ? (
+              <EmptyHint />
+            ) : (
+              <div className="space-y-2">
+                {children.map((child) => (
+                  <MiniNav key={child.id} member={child} onNavigate={onNavigate} />
+                ))}
+              </div>
+            )}
+          </RelationSection>
+
+          {siblings.length > 0 && (
+            <RelationSection title={`Siblings (${siblings.length})`}>
+              <div className="space-y-2">
+                {siblings.map((sibling) => (
+                  <MiniNav key={sibling.id} member={sibling} onNavigate={onNavigate} />
+                ))}
+              </div>
+            </RelationSection>
+          )}
+        </div>
       </div>
 
       <div className="border-t border-[color-mix(in_srgb,var(--color-bark)_6%,transparent)] p-4">
-          <button
-            type="button"
-            onClick={() => onNavigate(member.id)}
-            className="btn-liquid btn-primary w-full rounded-2xl py-2.5 text-sm font-medium text-[var(--color-cream)]"
-          >
-            Center tree on {member.firstName}
-          </button>
+        <button
+          type="button"
+          onClick={() => onNavigate(member.id)}
+          className="btn-liquid btn-primary w-full rounded-2xl py-2.5 text-sm font-medium text-[var(--color-cream)]"
+        >
+          Center tree on {member.firstName}
+        </button>
       </div>
     </aside>
+  )
+
+  if (docked) return panel
+
+  return (
+    <div className="person-detail-overlay fixed inset-0 z-40 flex justify-end">
+      <button
+        type="button"
+        className="min-w-0 flex-1 cursor-default"
+        onClick={onClose}
+        aria-label="Close details"
+      />
+      {panel}
+    </div>
   )
 }
 

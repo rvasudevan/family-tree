@@ -5,25 +5,24 @@
     "lastName": "",
     "gender": "male",
     "birthYear": "25 Apr 1898",
-    "birthPlace": "Puliyampettai, Madras Presidency, India",
+    "birthPlace": "Vedanthangal, India",
     "spouseId": "ka",
-    "generation": 1,
-    "deathYear": "1969"
+    "generation": 1
   },
   {
     "id": "ka",
-    "firstName": "Kanakavalli",
+    "firstName": "Kannakavalli",
     "lastName": "",
     "gender": "female",
     "birthYear": "15 Apr to 13 May 1906",
-    "birthPlace": "Triplicane,Madras, India",
+    "birthPlace": "Vedanthangal, India",
     "spouseId": "kr",
     "generation": 1
   },
   {
     "id": "ve",
-    "firstName": "Vedam",
-    "lastName": "(Vedu)",
+    "firstName": "K.Vedam",
+    "lastName": "",
     "gender": "female",
     "birthYear": "23 Oct 1923",
     "birthPlace": "Madras, India",
@@ -68,12 +67,10 @@
     "gender": "female",
     "birthYear": "12 Mar 1927",
     "birthPlace": "Madras, India",
-    "avatarUrl": "/avatars/sh.jpg",
     "spouseId": "rw",
     "fatherId": "kr",
     "motherId": "ka",
-    "generation": 2,
-    "deathYear": "Nov 20 2024"
+    "generation": 2
   },
   {
     "id": "rw",
@@ -81,10 +78,7 @@
     "lastName": "",
     "gender": "male",
     "spouseId": "sh",
-    "generation": 2,
-    "birthYear": "Feb 9 1921",
-    "deathYear": "Oct 30 1971",
-    "birthPlace": "Rajendram, Madras Presidency, India"
+    "generation": 2
   },
   {
     "id": "ja",
@@ -116,7 +110,6 @@
     "gender": "male",
     "birthYear": "12 May 1932",
     "birthPlace": "Madras, India",
-    "avatarUrl": "/avatars/pa.jpg",
     "spouseId": "vp",
     "fatherId": "kr",
     "motherId": "ka",
@@ -181,7 +174,6 @@
     "gender": "male",
     "birthYear": "25 Aug",
     "birthPlace": "Madras, India",
-    "avatarUrl": "/avatars/na.png",
     "spouseId": "vj",
     "fatherId": "kr",
     "motherId": "ka",
@@ -220,8 +212,8 @@
   {
     "id": "vs",
     "firstName": "Vasanta",
-    "lastName": "",
-    "gender": "female",
+    "lastName": "Rajagopalan",
+    "gender": "male",
     "birthYear": "9 Oct",
     "spouseId": "rg",
     "fatherId": "su",
@@ -263,8 +255,8 @@
   },
   {
     "id": "sd",
-    "firstName": "Srinivasan",
-    "lastName": "",
+    "firstName": "Sadagopan",
+    "lastName": "Srinivasan",
     "gender": "male",
     "birthYear": "26 Oct",
     "spouseId": "rv2",
@@ -348,7 +340,7 @@
     "lastName": "",
     "gender": "male",
     "birthYear": "9 Dec",
-    "avatarUrl": "/avatars/rv.jpg",
+    "avatarUrl": "/avatars/rv.png",
     "spouseId": "jv",
     "fatherId": "rw",
     "motherId": "sh",
@@ -356,11 +348,9 @@
   },
   {
     "id": "jv",
-    "firstName": "Jayashree",
+    "firstName": "Jayasri",
     "lastName": "Vasudevan",
     "gender": "female",
-    "birthYear": "9 May 1958",
-    "avatarUrl": "/avatars/jv.png",
     "spouseId": "rv",
     "generation": 3
   },
@@ -568,8 +558,7 @@
     "spouseId": "sj",
     "fatherId": "nr",
     "motherId": "jn",
-    "generation": 3,
-    "siblingOrder": 1
+    "generation": 3
   },
   {
     "id": "sj",
@@ -589,8 +578,7 @@
     "spouseId": "jn4",
     "fatherId": "nr",
     "motherId": "jn",
-    "generation": 3,
-    "siblingOrder": 2
+    "generation": 3
   },
   {
     "id": "jn4",
@@ -610,8 +598,7 @@
     "spouseId": "sl",
     "fatherId": "nr",
     "motherId": "jn",
-    "generation": 3,
-    "siblingOrder": 3
+    "generation": 3
   },
   {
     "id": "sl",
@@ -631,8 +618,7 @@
     "spouseId": "rj2",
     "fatherId": "np",
     "motherId": "in",
-    "generation": 3,
-    "siblingOrder": 1
+    "generation": 3
   },
   {
     "id": "rj2",
@@ -649,8 +635,7 @@
     "gender": "male",
     "fatherId": "np",
     "motherId": "in",
-    "generation": 3,
-    "siblingOrder": 2
+    "generation": 3
   },
   {
     "id": "re",
@@ -661,8 +646,7 @@
     "spouseId": "ss2",
     "fatherId": "np",
     "motherId": "in",
-    "generation": 3,
-    "siblingOrder": 3
+    "generation": 3
   },
   {
     "id": "ss2",
@@ -778,7 +762,7 @@
   {
     "id": "sr",
     "firstName": "Sriram",
-    "lastName": "",
+    "lastName": "Srinivasan",
     "gender": "male",
     "birthYear": "26 Feb",
     "spouseId": "at",

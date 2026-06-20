@@ -1,21 +1,5 @@
 import type { FamilyMember, TreeNode } from '../types'
-import {
-  isJayantiSundarSiblingGroup,
-  isKomalaChariSiblingGroup,
-  isKrishnamachariSiblingGroup,
-  isSangeetaRamprasadSiblingGroup,
-  isShanthaRangaswamySiblingGroup,
-  isUshaRamanujamSiblingGroup,
-  isVedamSiblingGroup,
-  JAYANTI_SUNDAR_CHILDREN_ORDER,
-  KOMALA_CHARI_CHILDREN_ORDER,
-  KRISHNAMACHARI_CHILDREN_ORDER,
-  SANGEETA_RAMPRASAD_CHILDREN_ORDER,
-  SHANTHA_CHILDREN_ORDER,
-  sortByCustomOrder,
-  USHA_RAMANUJAM_CHILDREN_ORDER,
-  VEDAM_CHILDREN_ORDER,
-} from './siblingOrder'
+import { sortSiblingMembers } from './siblingOrder'
 
 export class FamilyGraph {
   private byId: Map<string, FamilyMember>
@@ -47,7 +31,7 @@ export class FamilyGraph {
         children.push(candidate)
       }
     }
-    return sortMembers(children)
+    return sortSiblingMembers(children)
   }
 
   getSiblings(member: FamilyMember): FamilyMember[] {
@@ -61,7 +45,7 @@ export class FamilyGraph {
       if (sharesFather || sharesMother) siblingIds.add(candidate.id)
     }
 
-    return sortMembers(
+    return sortSiblingMembers(
       [...siblingIds].map((id) => this.byId.get(id)!).filter(Boolean),
     )
   }
@@ -175,7 +159,7 @@ export class FamilyGraph {
     }
 
     const roots = [...this.byId.values()].filter((m) => !hasParentLink.has(m.id))
-    return sortByBirth(roots)
+    return sortSiblingMembers(roots)
   }
 
   getConnectedMembers(focusId: string): Set<string> {
@@ -213,46 +197,4 @@ export class FamilyGraph {
       withSpouse,
     }
   }
-}
-
-function sortMembers(members: FamilyMember[]): FamilyMember[] {
-  if (isKrishnamachariSiblingGroup(members)) {
-    return sortByCustomOrder(members, KRISHNAMACHARI_CHILDREN_ORDER)
-  }
-  if (isVedamSiblingGroup(members)) {
-    return sortByCustomOrder(members, VEDAM_CHILDREN_ORDER)
-  }
-  if (isShanthaRangaswamySiblingGroup(members)) {
-    return sortByCustomOrder(members, SHANTHA_CHILDREN_ORDER)
-  }
-  if (isJayantiSundarSiblingGroup(members)) {
-    return sortByCustomOrder(members, JAYANTI_SUNDAR_CHILDREN_ORDER)
-  }
-  if (isKomalaChariSiblingGroup(members)) {
-    return sortByCustomOrder(members, KOMALA_CHARI_CHILDREN_ORDER)
-  }
-  if (isSangeetaRamprasadSiblingGroup(members)) {
-    return sortByCustomOrder(members, SANGEETA_RAMPRASAD_CHILDREN_ORDER)
-  }
-  if (isUshaRamanujamSiblingGroup(members)) {
-    return sortByCustomOrder(members, USHA_RAMANUJAM_CHILDREN_ORDER)
-  }
-  return sortByBirth(members)
-}
-
-function sortByBirth(members: FamilyMember[]): FamilyMember[] {
-  return [...members].sort((a, b) => {
-    const ay = extractYear(a.birthYear)
-    const by = extractYear(b.birthYear)
-    if (ay !== null && by !== null) return ay - by
-    if (ay !== null) return -1
-    if (by !== null) return 1
-    return a.firstName.localeCompare(b.firstName)
-  })
-}
-
-function extractYear(value?: string): number | null {
-  if (!value) return null
-  const match = value.match(/\b(18|19|20)\d{2}\b/)
-  return match ? Number(match[0]) : null
 }

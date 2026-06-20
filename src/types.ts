@@ -14,6 +14,8 @@ export interface FamilyMember {
   motherId?: string
   generation?: number
   anniversary?: string
+  /** Left-to-right sibling order among children of the same parents */
+  siblingOrder?: number
 }
 
 export interface TreeNode {
