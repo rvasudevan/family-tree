@@ -1,5 +1,5 @@
 import type { FamilyMember, LayoutEdge, LayoutNode, TreeLayout, TreeNode } from '../types'
-import { cardBirthLabel, cardDisplayName } from './family'
+import { cardBirthLine, cardDeathLine, cardDateLineSlots, cardDisplayName } from './family'
 
 const CARD_W = 180
 const CARD_W_DEEP = 228
@@ -26,21 +26,32 @@ function cardHeightForLevel(level: number): number {
 
 function cardHeightForMember(member: FamilyMember, level: number): number {
   const base = cardHeightForLevel(level)
-  return cardBirthLabel(member) ? base + 18 : base
+  return base + cardDateLineSlots(member) * 18
 }
 
 function hGapForLevel(level: number): number {
   return level >= 2 ? H_GAP_DEEP : H_GAP
 }
 
-/** Fit card width to the displayed name and birth line so labels are not clipped */
+/** Fit card width to the displayed name and date lines so labels are not clipped */
 function measureCardWidth(member: FamilyMember, level: number): number {
   const floor = cardWidthFloor(level)
   const name = cardDisplayName(member)
-  const birth = cardBirthLabel(member) ?? ''
-  const longest = Math.max(name.length, birth.length)
+  const birth = cardBirthLine(member) ?? ''
+  const death = cardDeathLine(member) ?? ''
+  const longest = Math.max(name.length, birth.length, death.length)
   const needed = Math.ceil(longest * PX_PER_CHAR) + CARD_CHROME
   return Math.max(floor, needed)
+}
+
+/** Same width for both partners so couple cards line up visually. */
+function sharedCoupleCardWidth(a: FamilyMember, b: FamilyMember, level: number): number {
+  return Math.max(measureCardWidth(a, level), measureCardWidth(b, level))
+}
+
+/** Same height for both partners so couple cards line up visually. */
+function sharedCoupleCardHeight(a: FamilyMember, b: FamilyMember, level: number): number {
+  return Math.max(cardHeightForMember(a, level), cardHeightForMember(b, level))
 }
 
 function coupleSlotWidth(
@@ -170,9 +181,9 @@ function hasDisplayedParents(node: TreeNode): boolean {
   return Boolean(node.parents?.father || node.parents?.mother)
 }
 
-/** Stack spouse below the focus person when they're a first-gen child or when parents sit above */
-function useVerticalFocusCouple(level: number, node: TreeNode): boolean {
-  return level === 1 || (level === 0 && hasDisplayedParents(node))
+/** Stack spouse below focus only in the first-gen children row under the root couple */
+function useVerticalFocusCouple(level: number, _node: TreeNode): boolean {
+  return level === 1
 }
 
 function focusCoupleWidth(node: TreeNode, level: number): number {
@@ -182,28 +193,35 @@ function focusCoupleWidth(node: TreeNode, level: number): number {
 }
 
 function focusCoupleHeight(node: TreeNode, level: number): number {
-  const h = cardHeightForLevel(level)
-  return useVerticalFocusCouple(level, node) && node.spouse ? h + SPOUSE_V_GAP + h : h
+  if (useVerticalFocusCouple(level, node) && node.spouse) {
+    const cardH = sharedCoupleCardHeight(node.member, node.spouse, level)
+    return cardH + SPOUSE_V_GAP + cardH
+  }
+  if (node.spouse) return sharedCoupleCardHeight(node.member, node.spouse, level)
+  return cardHeightForMember(node.member, level)
 }
 
 function measureSubtree(node: TreeNode, level = 0): SubtreeSize {
   const childrenBlock = measureChildrenBlock(node.children, level)
-  const h = cardHeightForLevel(level)
   const coupleWidth = focusCoupleWidth(node, level)
   const memberW = measureCardWidth(node.member, level)
 
   const hasParents = hasDisplayedParents(node)
   let parentWidth = 0
+  let parentHeight = 0
   if (hasParents) {
     const { father, mother } = node.parents!
-    parentWidth =
-      mother && father
-        ? coupleSlotWidth(mother, father, level)
-        : measureCardWidth((mother ?? father)!, level)
+    if (mother && father) {
+      parentWidth = coupleSlotWidth(mother, father, level)
+      parentHeight = sharedCoupleCardHeight(mother, father, level) + PARENT_V_GAP
+    } else {
+      const single = (mother ?? father)!
+      parentWidth = measureCardWidth(single, level)
+      parentHeight = cardHeightForMember(single, level) + PARENT_V_GAP
+    }
   }
 
   const rowWidth = Math.max(coupleWidth, childrenBlock.width, parentWidth)
-  const parentHeight = hasParents ? PARENT_V_GAP + h : 0
 
   return {
     width: Math.max(rowWidth, memberW),
@@ -222,15 +240,18 @@ function placeVerticalCouple(
   placed: Set<string>,
 ): number {
   const { member, spouse } = node
-  const h = cardHeightForLevel(level)
-  addNode(nodes, placed, member, centerX, y, memberRole, level)
+  const cardH = spouse
+    ? sharedCoupleCardHeight(member, spouse, level)
+    : cardHeightForMember(member, level)
+  const cardW = spouse ? sharedCoupleCardWidth(member, spouse, level) : undefined
+  addNode(nodes, placed, member, centerX, y, memberRole, level, cardW, cardH)
 
-  if (!spouse) return y + h
+  if (!spouse) return y + cardH
 
-  const spouseY = y + h + SPOUSE_V_GAP
-  addNode(nodes, placed, spouse, centerX, spouseY, 'spouse', level)
+  const spouseY = y + cardH + SPOUSE_V_GAP
+  addNode(nodes, placed, spouse, centerX, spouseY, 'spouse', level, cardW, cardH)
   edges.push({ from: member.id, to: spouse.id, type: 'marriage', marriageLayout: 'vertical' })
-  return spouseY + h
+  return spouseY + cardH
 }
 
 function horizontalCoupleCenters(
@@ -259,11 +280,11 @@ function placeHorizontalCouple(
 
   if (spouse) {
     const [left, right] = orderCoupleFemaleFirst(member, spouse)
-    const leftW = measureCardWidth(left, level)
-    const rightW = measureCardWidth(right, level)
-    const { leftX, rightX } = horizontalCoupleCenters(centerX, leftW, rightW)
-    addNode(nodes, placed, left, leftX, y, left.id === member.id ? memberRole : 'spouse', level)
-    addNode(nodes, placed, right, rightX, y, right.id === member.id ? memberRole : 'spouse', level)
+    const cardW = sharedCoupleCardWidth(left, right, level)
+    const cardH = sharedCoupleCardHeight(left, right, level)
+    const { leftX, rightX } = horizontalCoupleCenters(centerX, cardW, cardW)
+    addNode(nodes, placed, left, leftX, y, left.id === member.id ? memberRole : 'spouse', level, cardW, cardH)
+    addNode(nodes, placed, right, rightX, y, right.id === member.id ? memberRole : 'spouse', level, cardW, cardH)
     edges.push({ from: left.id, to: right.id, type: 'marriage', marriageLayout: 'horizontal' })
   } else {
     addNode(nodes, placed, member, centerX, y, memberRole, level)
@@ -280,7 +301,6 @@ function placeSubtree(
   level: number,
 ): void {
   const { member, spouse, children, parents } = node
-  const h = cardHeightForLevel(level)
 
   if (parents?.father || parents?.mother) {
     const parentY = y
@@ -288,11 +308,11 @@ function placeSubtree(
     const father = parents.father
 
     if (mother && father) {
-      const motherW = measureCardWidth(mother, level)
-      const fatherW = measureCardWidth(father, level)
-      const { leftX, rightX } = horizontalCoupleCenters(centerX, motherW, fatherW)
-      addNode(nodes, placed, mother, leftX, parentY, 'parent', level)
-      addNode(nodes, placed, father, rightX, parentY, 'parent', level)
+      const cardW = sharedCoupleCardWidth(mother, father, level)
+      const cardH = sharedCoupleCardHeight(mother, father, level)
+      const { leftX, rightX } = horizontalCoupleCenters(centerX, cardW, cardW)
+      addNode(nodes, placed, mother, leftX, parentY, 'parent', level, cardW, cardH)
+      addNode(nodes, placed, father, rightX, parentY, 'parent', level, cardW, cardH)
       edges.push({
         from: mother.id,
         to: member.id,
@@ -300,29 +320,33 @@ function placeSubtree(
         coupleFrom: [mother.id, father.id],
       })
       edges.push({ from: mother.id, to: father.id, type: 'marriage', marriageLayout: 'horizontal' })
+      y = parentY + cardH + PARENT_V_GAP
     } else {
       const single = mother ?? father!
+      const singleH = cardHeightForMember(single, level)
       addNode(nodes, placed, single, centerX, parentY, 'parent', level)
       edges.push({ from: single.id, to: member.id, type: 'parent-child' })
+      y = parentY + singleH + PARENT_V_GAP
     }
-
-    y += PARENT_V_GAP
   }
 
   const memberRole: LayoutNode['role'] = level === 1 ? 'child' : 'focus'
-  let stackBottom = y + h
+  let stackBottom: number
 
   if (useVerticalFocusCouple(level, node)) {
     stackBottom = placeVerticalCouple(node, centerX, y, memberRole, level, nodes, edges, placed)
   } else {
+    const coupleH = node.spouse
+      ? sharedCoupleCardHeight(node.member, node.spouse, level)
+      : cardHeightForMember(node.member, level)
     placeHorizontalCouple(node, centerX, y, memberRole, level, nodes, edges, placed)
-    stackBottom = y + h
+    stackBottom = y + coupleH
   }
 
   if (children.length === 0) return
 
   if (level === 0) {
-    placeFirstGenChildrenRow(node, centerX, y + CARD_H, nodes, edges, placed)
+    placeFirstGenChildrenRow(node, centerX, stackBottom, nodes, edges, placed)
     return
   }
 
@@ -404,6 +428,8 @@ function addNode(
   y: number,
   role: LayoutNode['role'],
   depth: number,
+  cardW?: number,
+  cardH?: number,
 ): void {
   if (placed.has(member.id)) return
   placed.add(member.id)
@@ -414,8 +440,8 @@ function addNode(
     y,
     role,
     depth,
-    cardW: measureCardWidth(member, depth),
-    cardH: cardHeightForMember(member, depth),
+    cardW: cardW ?? measureCardWidth(member, depth),
+    cardH: cardH ?? cardHeightForMember(member, depth),
   })
 }
 

@@ -34,7 +34,18 @@ async function getMembersFromFile(): Promise<FamilyMember[]> {
   if (!Array.isArray(parsed)) {
     throw new Error('Family data file is invalid')
   }
-  return parsed as FamilyMember[]
+  return mergeSeedAvatars(parsed as FamilyMember[])
+}
+
+function mergeSeedAvatars(members: FamilyMember[]): FamilyMember[] {
+  const seedById = new Map(SEED_MEMBERS.map((m) => [m.id, m]))
+  return members.map((member) => {
+    const seed = seedById.get(member.id)
+    if (seed?.avatarUrl && !member.avatarUrl) {
+      return { ...member, avatarUrl: seed.avatarUrl }
+    }
+    return member
+  })
 }
 
 async function setMembersToFile(members: FamilyMember[]): Promise<void> {
@@ -47,7 +58,7 @@ async function getMembersFromBlob(): Promise<FamilyMember[]> {
     const { getStore } = await import('@netlify/blobs')
     const store = getStore({ name: 'family-tree', consistency: 'strong' })
     const data = await store.get(BLOB_KEY, { type: 'json' })
-    if (data) return data as FamilyMember[]
+    if (data) return mergeSeedAvatars(data as FamilyMember[])
     const seed = await readSeed()
     await store.setJSON(BLOB_KEY, seed)
     return seed

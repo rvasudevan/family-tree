@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import type { FamilyMember } from '../types'
 import type { FamilyGraph } from '../utils/relationships'
-import { cardBirthLabel, cardDisplayName, type CardDisplayRole } from '../utils/family'
+import { cardBirthLine, cardDeathLine, cardDisplayName, type CardDisplayRole } from '../utils/family'
 import { MemberAvatar } from './MemberAvatar'
 import { PersonCardHoverDetails } from './PersonCardHoverDetails'
 
@@ -44,7 +44,14 @@ export function PersonCard({
     return () => mq.removeEventListener('change', onChange)
   }, [])
 
-  const birthLabel = cardBirthLabel(member)
+  const birthLine = cardBirthLine(member)
+  const deathLine = cardDeathLine(member)
+  const reserveDeathSlot = Boolean(birthLine) && !deathLine && !compact
+  const displayName = cardDisplayName(member, displayRole)
+  const ariaParts: string[] = []
+  if (member.birthYear?.trim()) ariaParts.push(`born ${member.birthYear.trim()}`)
+  if (member.deathYear?.trim()) ariaParts.push(`died ${member.deathYear.trim()}`)
+  const ariaLabel = ariaParts.length ? `${displayName}, ${ariaParts.join(', ')}` : displayName
   const genderClass =
     member.gender === 'male'
       ? 'person-card-face-male'
@@ -92,9 +99,10 @@ export function PersonCard({
       }}
       onPointerLeave={resetTilt}
       style={{ transform }}
-      aria-label={birthLabel ? `${cardDisplayName(member, displayRole)}, born ${birthLabel}` : cardDisplayName(member, displayRole)}
+      aria-label={ariaLabel}
       className={`person-card-3d ${hovering ? 'is-hovering' : ''} ${selected ? 'selected' : ''} ${expanded ? 'expanded-branch' : ''} ${compact ? 'person-card-3d-compact' : ''}`}
     >
+      {!compact && <span className={`person-card-back ${genderClass}`} aria-hidden="true" />}
       <span
         className={`person-card-face ${genderClass} ${lifted || selected || expanded || hovering ? 'lifted' : ''} ${hovering ? 'is-expanded' : ''}`}
       >
@@ -103,15 +111,24 @@ export function PersonCard({
         <span className="person-card-content">
           <span className="flex items-start gap-2.5">
             <MemberAvatar member={member} size="md" className="avatar-ring avatar-ring-3d" />
-            <span className="min-w-max flex-1">
+            <span className="w-max max-w-full shrink-0">
               <span className="person-card-name block leading-tight">
-                {cardDisplayName(member, displayRole)}
+                {displayName}
               </span>
-              {birthLabel && (
+              {birthLine && (
                 <span className="person-card-meta mt-0.5 block">
-                  {birthLabel}
+                  {birthLine}
                 </span>
               )}
+              {deathLine ? (
+                <span className="person-card-meta mt-0.5 block">
+                  {deathLine}
+                </span>
+              ) : reserveDeathSlot ? (
+                <span className="person-card-meta person-card-meta-reserved mt-0.5 block" aria-hidden="true">
+                  d.
+                </span>
+              ) : null}
               {member.birthPlace && showBirthPlace && !compact && !hovering && (
                 <span className="person-card-place mt-0.5 block truncate">
                   {member.birthPlace}

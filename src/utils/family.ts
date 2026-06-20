@@ -58,14 +58,49 @@ export function lifespan(member: FamilyMember): string | null {
   return null
 }
 
-/** Compact birth/death line for tree cards (no leading “b.” / “d.” on birth alone) */
-export function cardBirthLabel(member: FamilyMember): string | null {
+function monthFromDateFragment(fragment: string): string | null {
+  const match = fragment.trim().match(/\b([A-Za-z]{3,9})\b/)
+  return match ? match[1] : null
+}
+
+function yearFromDateFragment(fragment: string): string | null {
+  const match = fragment.trim().match(/\b(\d{4})\b/)
+  return match ? match[1] : null
+}
+
+/** Shorten ambiguous birth ranges for tree cards; full value stays in hover panel */
+function compactBirthFragment(value: string): string {
+  const rangeMatch = value.match(/^(.+?)\s+to\s+(.+)$/i)
+  if (!rangeMatch) return value
+
+  const [, start, end] = rangeMatch
+  const startMonth = monthFromDateFragment(start)
+  const endMonth = monthFromDateFragment(end)
+  const year = yearFromDateFragment(end) ?? yearFromDateFragment(start)
+  if (!startMonth || !endMonth || !year) return value
+  if (startMonth === endMonth) return `${startMonth} ${year}`
+  return `${startMonth}–${endMonth} ${year}`
+}
+
+/** Birth line for tree cards */
+export function cardBirthLine(member: FamilyMember): string | null {
   const birth = member.birthYear?.trim()
+  if (!birth) return null
+  return `b. ${compactBirthFragment(birth)}`
+}
+
+/** Death line for tree cards */
+export function cardDeathLine(member: FamilyMember): string | null {
   const death = member.deathYear?.trim()
-  if (birth && death) return `${birth} – ${death}`
-  if (birth) return birth
-  if (death) return `d. ${death}`
-  return null
+  if (!death) return null
+  return `d. ${compactBirthFragment(death)}`
+}
+
+/** Date rows reserved on tree cards (birth row + death row when birth is known). */
+export function cardDateLineSlots(member: FamilyMember): number {
+  if (member.birthYear?.trim()) return 2
+  if (member.deathYear?.trim()) return 1
+  return 0
 }
 
 export function genderLabel(gender: FamilyMember['gender']): string {

@@ -4,12 +4,14 @@ import {
   isKomalaChariSiblingGroup,
   isKrishnamachariSiblingGroup,
   isSangeetaRamprasadSiblingGroup,
+  isShanthaRangaswamySiblingGroup,
   isUshaRamanujamSiblingGroup,
   isVedamSiblingGroup,
   JAYANTI_SUNDAR_CHILDREN_ORDER,
   KOMALA_CHARI_CHILDREN_ORDER,
   KRISHNAMACHARI_CHILDREN_ORDER,
   SANGEETA_RAMPRASAD_CHILDREN_ORDER,
+  SHANTHA_CHILDREN_ORDER,
   sortByCustomOrder,
   USHA_RAMANUJAM_CHILDREN_ORDER,
   VEDAM_CHILDREN_ORDER,
@@ -64,14 +66,19 @@ export class FamilyGraph {
     )
   }
 
-  buildTree(focusId: string, depth = 3, visited = new Set<string>()): TreeNode | null {
+  buildTree(
+    focusId: string,
+    depth = 3,
+    visited = new Set<string>(),
+    showParents = true,
+  ): TreeNode | null {
     const member = this.get(focusId)
     if (!member || visited.has(focusId)) return null
 
     visited.add(focusId)
 
     const spouse = this.getSpouse(member)
-    const parents = this.getParents(member)
+    const parents = showParents ? this.getParents(member) : undefined
     const children =
       depth > 0
         ? this.getChildren(member)
@@ -109,8 +116,9 @@ export class FamilyGraph {
     focusId: string,
     expandedId: string | null,
     revealedChildCount: number = 0,
+    showParents = true,
   ): TreeNode | null {
-    const root = this.buildTree(focusId, 0)
+    const root = this.buildTree(focusId, 0, new Set(), showParents)
     if (!root || !expandedId || revealedChildCount <= 0) return root
 
     if (!this.isAncestorOf(focusId, expandedId) && expandedId !== focusId) return root
@@ -213,6 +221,9 @@ function sortMembers(members: FamilyMember[]): FamilyMember[] {
   }
   if (isVedamSiblingGroup(members)) {
     return sortByCustomOrder(members, VEDAM_CHILDREN_ORDER)
+  }
+  if (isShanthaRangaswamySiblingGroup(members)) {
+    return sortByCustomOrder(members, SHANTHA_CHILDREN_ORDER)
   }
   if (isJayantiSundarSiblingGroup(members)) {
     return sortByCustomOrder(members, JAYANTI_SUNDAR_CHILDREN_ORDER)

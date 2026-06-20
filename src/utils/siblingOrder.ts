@@ -13,6 +13,13 @@ export const KRISHNAMACHARI_CHILDREN_ORDER = [
   'my', // Mythili
 ]
 
+/** Left-to-right order for children of Shantha & R.S.Rangaswamy (oldest first) */
+export const SHANTHA_CHILDREN_ORDER = [
+  'se', // R.Seshadri
+  'rv', // R.Vasudevan
+  'rj', // R.Jagannathan
+]
+
 /** Left-to-right order for children of K.Vedam & V.Sundararajan (oldest first) */
 export const VEDAM_CHILDREN_ORDER = [
   'vs', // Vasanta
@@ -46,6 +53,10 @@ export const USHA_RAMANUJAM_CHILDREN_ORDER = [
 
 export function isKrishnamachariSiblingGroup(members: FamilyMember[]): boolean {
   return members.length > 0 && members.every((m) => m.fatherId === 'kr' && m.motherId === 'ka')
+}
+
+export function isShanthaRangaswamySiblingGroup(members: FamilyMember[]): boolean {
+  return members.length > 0 && members.every((m) => m.fatherId === 'rw' && m.motherId === 'sh')
 }
 
 export function isVedamSiblingGroup(members: FamilyMember[]): boolean {

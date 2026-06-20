@@ -62,14 +62,25 @@ export async function saveMembers(members: FamilyMember[]): Promise<void> {
 }
 
 export async function loginAdmin(password: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password }),
-  })
+  let res: Response
+  try {
+    res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    })
+  } catch {
+    throw new Error(
+      'Could not reach the admin API. On Netlify, confirm the site is deployed with functions. Locally, run npm run dev:all.',
+    )
+  }
 
   if (!res.ok) {
-    throw new Error('Incorrect password')
+    const body = (await res.json().catch(() => ({}))) as { error?: string }
+    if (res.status === 404) {
+      throw new Error('Admin login API not found. Try redeploying the latest version from GitHub.')
+    }
+    throw new Error(body.error || 'Incorrect password')
   }
 
   const data = (await res.json()) as { token: string }
